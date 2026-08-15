@@ -13,10 +13,11 @@
 - **📁 Project Tracker** — Track apps/projects with status, Arena.ai & GitHub links.
 - **📋 Activity Log** — Every action auto-logged. Full audit trail.
 - **🔍 Search & Filter** — Find anything across ideas, projects, and tags.
+- **🔗 GitHub Sync** — Login with GitHub, data syncs to a private Gist. Cross-device!
 - **📦 Export/Import** — JSON backup. Portable. Git-friendly.
 - **📱 Mobile-First** — Looks and feels great on any device.
 - **🌑 Dark Theme** — Easy on the eyes, day or night.
-- **⌨️ Keyboard Shortcuts** — Alt+N (new idea), Alt+1/2/3 (switch tabs)
+- **⌨️ Keyboard Shortcuts** — Alt+N (new idea), Alt+1/2/3/4 (switch tabs)
 
 ## 🚀 Deploy to GitHub Pages (2 minutes)
 
@@ -33,6 +34,15 @@
 
 That's it. No build step. No npm. No server.
 
+## 🔗 Setting Up GitHub Sync
+
+1. Go to [github.com/settings/tokens/new](https://github.com/settings/tokens/new?scopes=gist&description=DelQuro%20Files)
+2. Give it a name like "DelQuro Files"
+3. Check the **gist** scope
+4. Click **Generate token** — copy it
+5. In the app, go to **⚙️ Settings** → paste the token → **Connect GitHub**
+6. Done! Data auto-syncs to a private Gist from now on.
+
 ## ⌨️ Shortcuts
 
 | Shortcut | Action |
@@ -41,6 +51,7 @@ That's it. No build step. No npm. No server.
 | `Alt + 1` | Ideas tab |
 | `Alt + 2` | Projects tab |
 | `Alt + 3` | Activity log tab |
+| `Alt + 4` | Settings tab |
 | `Ctrl + Enter` | Save idea (while typing) |
 | `Escape` | Close modals |
 

@@ -138,6 +138,7 @@ function addIdea(text, tags = []) {
   renderIdeas();
   updateCounts();
   renderFilterBar();
+  scheduleSync();
   toast('💡 Idea saved!');
 }
 
@@ -150,6 +151,7 @@ function deleteIdea(id) {
   logActivity('delete', `Deleted idea: "${escapeHtml(idea.text.slice(0, 50))}"`);
   renderIdeas();
   updateCounts();
+  scheduleSync();
   toast('🗑️ Idea deleted');
 }
 
@@ -171,6 +173,7 @@ function addProject(data) {
   logActivity('project', `Created project: <strong>${escapeHtml(project.name)}</strong>`);
   renderProjects();
   updateCounts();
+  scheduleSync();
   toast('📁 Project created!');
   return project;
 }
@@ -193,6 +196,7 @@ function updateProject(id, data) {
   DB.commit();
   logActivity('project', `Updated project: <strong>${escapeHtml(data.name)}</strong>`);
   renderProjects();
+  scheduleSync();
   toast('✅ Project updated');
 }
 
@@ -205,6 +209,7 @@ function deleteProject(id) {
   logActivity('delete', `Deleted project: <strong>${escapeHtml(project.name)}</strong>`);
   renderProjects();
   updateCounts();
+  scheduleSync();
   toast('🗑️ Project deleted');
 }
 
@@ -433,6 +438,9 @@ function switchView(viewName) {
   // Show/hide FAB based on view
   const fab = document.getElementById('fab');
   fab.style.display = viewName === 'ideas' ? 'flex' : 'none';
+  
+  // Render settings if switching to it
+  if (viewName === 'settings') renderSettings();
   
   // Scroll to top
   window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -742,6 +750,7 @@ function initShortcuts() {
       if (e.key === '1') { e.preventDefault(); switchView('ideas'); }
       if (e.key === '2') { e.preventDefault(); switchView('projects'); }
       if (e.key === '3') { e.preventDefault(); switchView('activity'); }
+      if (e.key === '4') { e.preventDefault(); switchView('settings'); }
     }
     
     // Alt+N for new idea
@@ -758,6 +767,338 @@ function initShortcuts() {
   });
 }
 
+// ========== GITHUB SYNC (Gist) ==========
+const GistSync = {
+  _tokenKey: 'delquro-gh-token',
+  _gistKey: 'delquro-gh-gist',
+  _lastSyncKey: 'delquro-last-sync',
+  _filename: 'delquro-files-data.json',
+
+  // Simple obfuscation for token storage (not real encryption, just not plaintext)
+  _obfuscate(str) {
+    return btoa(encodeURIComponent(str).split('').reverse().join(''));
+  },
+
+  _deobfuscate(str) {
+    try {
+      return decodeURIComponent(atob(str).split('').reverse().join(''));
+    } catch { return null; }
+  },
+
+  getToken() {
+    const raw = localStorage.getItem(this._tokenKey);
+    if (!raw) return null;
+    return this._deobfuscate(raw);
+  },
+
+  setToken(token) {
+    localStorage.setItem(this._tokenKey, this._obfuscate(token));
+  },
+
+  clearToken() {
+    localStorage.removeItem(this._tokenKey);
+    localStorage.removeItem(this._gistKey);
+    localStorage.removeItem(this._lastSyncKey);
+  },
+
+  getGistId() {
+    return localStorage.getItem(this._gistKey);
+  },
+
+  setGistId(id) {
+    localStorage.setItem(this._gistKey, id);
+  },
+
+  getLastSync() {
+    const ts = localStorage.getItem(this._lastSyncKey);
+    return ts ? new Date(ts) : null;
+  },
+
+  setLastSync() {
+    localStorage.setItem(this._lastSyncKey, new Date().toISOString());
+  },
+
+  isConnected() {
+    return !!this.getToken() && !!this.getGistId();
+  },
+
+  async _fetch(url, options = {}) {
+    const token = this.getToken();
+    const headers = {
+      'Accept': 'application/vnd.github.v3+json',
+      'Authorization': `token ${token}`,
+      ...(options.headers || {})
+    };
+    
+    const res = await fetch(url, { ...options, headers });
+    
+    if (res.status === 401) {
+      throw new Error('Token invalid or expired. Please reconnect.');
+    }
+    if (res.status === 404) {
+      throw new Error('Gist not found. It may have been deleted.');
+    }
+    if (!res.ok) {
+      const body = await res.text();
+      throw new Error(`GitHub API error (${res.status}): ${body.slice(0, 200)}`);
+    }
+    
+    return res.json();
+  },
+
+  // Create a new private Gist for data storage
+  async createGist() {
+    const data = JSON.stringify(DB.data, null, 2);
+    
+    const res = await this._fetch('https://api.github.com/gists', {
+      method: 'POST',
+      body: JSON.stringify({
+        description: 'DelQuro Files — App Data (auto-synced)',
+        public: false,
+        files: {
+          [this._filename]: { content: data }
+        }
+      })
+    });
+    
+    this.setGistId(res.id);
+    logActivity('system', `🔗 Created sync Gist: <code>${res.id.slice(0, 8)}...</code>`);
+    return res;
+  },
+
+  // Push local data to Gist
+  async push() {
+    if (!this.getToken()) throw new Error('Not connected to GitHub');
+    
+    let gistId = this.getGistId();
+    
+    // Create Gist if none exists
+    if (!gistId) {
+      const gist = await this.createGist();
+      gistId = gist.id;
+    }
+    
+    // Update the Gist
+    const data = JSON.stringify(DB.data, null, 2);
+    
+    await this._fetch(`https://api.github.com/gists/${gistId}`, {
+      method: 'PATCH',
+      body: JSON.stringify({
+        files: {
+          [this._filename]: { content: data }
+        }
+      })
+    });
+    
+    this.setLastSync();
+    return true;
+  },
+
+  // Pull data from Gist to local
+  async pull() {
+    if (!this.isConnected()) throw new Error('Not connected to GitHub');
+    
+    const gistId = this.getGistId();
+    const gist = await this._fetch(`https://api.github.com/gists/${gistId}`);
+    
+    const file = gist.files[this._filename];
+    if (!file) throw new Error('Data file not found in Gist');
+    
+    const remoteData = JSON.parse(file.content);
+    
+    // Merge: remote wins for conflicts, local items kept if not in remote
+    this._mergeData(remoteData);
+    DB.commit();
+    this.setLastSync();
+    
+    renderAll();
+    return remoteData;
+  },
+
+  // Smart merge: remote items take priority, local-only items preserved
+  _mergeData(remote) {
+    const local = DB.data;
+    
+    // Ideas: merge by id, remote wins
+    const localIdeaMap = new Map(local.ideas.map(i => [i.id, i]));
+    (remote.ideas || []).forEach(i => localIdeaMap.set(i.id, i));
+    local.ideas = [...localIdeaMap.values()].sort((a, b) => new Date(b.created) - new Date(a.created));
+    
+    // Projects: merge by id, remote wins
+    const localProjMap = new Map(local.projects.map(p => [p.id, p]));
+    (remote.projects || []).forEach(p => localProjMap.set(p.id, p));
+    local.projects = [...localProjMap.values()].sort((a, b) => new Date(b.updated) - new Date(a.updated));
+    
+    // Activity: combine and dedupe
+    const localActMap = new Map(local.activity.map(a => [a.id, a]));
+    (remote.activity || []).forEach(a => localActMap.set(a.id, a));
+    local.activity = [...localActMap.values()].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)).slice(0, 200);
+    
+    // Tags: combine
+    const allTags = new Set([...local.tags, ...(remote.tags || [])]);
+    local.tags = [...allTags];
+  },
+
+  // Full sync: pull then push
+  async sync() {
+    if (!this.isConnected()) throw new Error('Not connected');
+    
+    try {
+      await this.pull();
+      await this.push();
+      this.setLastSync();
+      logActivity('system', '🔄 Sync completed successfully');
+      return true;
+    } catch (e) {
+      logActivity('system', `❌ Sync failed: ${e.message}`);
+      throw e;
+    }
+  },
+
+  // Verify token works by fetching user info
+  async verifyToken() {
+    try {
+      const user = await this._fetch('https://api.github.com/user');
+      return user;
+    } catch {
+      return null;
+    }
+  }
+};
+
+// ========== SETTINGS UI ==========
+function renderSettings() {
+  const connected = GistSync.isConnected();
+  const elConnected = document.getElementById('github-connected');
+  const elDisconnected = document.getElementById('github-disconnected');
+  
+  if (connected) {
+    elConnected.classList.remove('hidden');
+    elDisconnected.classList.add('hidden');
+    document.getElementById('gist-id-display').textContent = GistSync.getGistId()?.slice(0, 12) + '...';
+    
+    const lastSync = GistSync.getLastSync();
+    document.getElementById('last-sync-time').textContent = lastSync ? timeAgo(lastSync.toISOString()) : 'Never';
+  } else {
+    elConnected.classList.add('hidden');
+    elDisconnected.classList.remove('hidden');
+  }
+}
+
+function initSettings() {
+  // Connect GitHub
+  document.getElementById('btn-connect-github').addEventListener('click', async () => {
+    const token = document.getElementById('github-token').value.trim();
+    if (!token) {
+      toast('⚠️ Enter your GitHub token');
+      return;
+    }
+    
+    const btn = document.getElementById('btn-connect-github');
+    btn.textContent = 'Connecting...';
+    btn.disabled = true;
+    
+    GistSync.setToken(token);
+    
+    // Verify the token
+    const user = await GistSync.verifyToken();
+    
+    if (!user) {
+      GistSync.clearToken();
+      btn.textContent = 'Connect GitHub';
+      btn.disabled = false;
+      toast('❌ Invalid token. Check and try again.');
+      return;
+    }
+    
+    // Create initial Gist
+    try {
+      await GistSync.createGist();
+      await GistSync.push();
+      
+      logActivity('system', `🔗 Connected as <strong>${escapeHtml(user.login)}</strong> — data syncing to Gist`);
+      toast(`✅ Connected as ${user.login}!`);
+      
+      document.getElementById('github-token').value = '';
+      renderSettings();
+    } catch (e) {
+      GistSync.clearToken();
+      toast('❌ Connection failed: ' + e.message);
+    }
+    
+    btn.textContent = 'Connect GitHub';
+    btn.disabled = false;
+  });
+  
+  // Disconnect
+  document.getElementById('btn-disconnect').addEventListener('click', () => {
+    if (confirm('Disconnect GitHub? Local data stays, but sync stops.')) {
+      GistSync.clearToken();
+      logActivity('system', '🔌 Disconnected from GitHub');
+      renderSettings();
+      toast('Disconnected from GitHub');
+    }
+  });
+  
+  // Sync now
+  document.getElementById('btn-sync-now').addEventListener('click', async () => {
+    const btn = document.getElementById('btn-sync-now');
+    btn.textContent = '⏳ Syncing...';
+    btn.disabled = true;
+    
+    try {
+      await GistSync.sync();
+      toast('✅ Synced!');
+      renderSettings();
+    } catch (e) {
+      toast('❌ ' + e.message);
+    }
+    
+    btn.textContent = '🔄 Sync Now';
+    btn.disabled = false;
+  });
+  
+  // Export/Import from settings
+  document.getElementById('btn-export-settings').addEventListener('click', exportData);
+  document.getElementById('btn-import-settings').addEventListener('click', () => {
+    document.getElementById('import-modal').classList.remove('hidden');
+  });
+  
+  // Clear all data
+  document.getElementById('btn-clear-all').addEventListener('click', () => {
+    if (confirm('⚠️ Delete ALL local data? This cannot be undone!\n\n(Tip: Export first if you want a backup)')) {
+      if (confirm('Are you really sure? Everything will be gone.')) {
+        DB.data.ideas = [];
+        DB.data.projects = [];
+        DB.data.activity = [];
+        DB.data.tags = ['feature', 'bug', 'design', 'improvement'];
+        DB.commit();
+        
+        logActivity('system', '🗑️ All data cleared by user');
+        renderAll();
+        renderSettings();
+        toast('🗑️ All data cleared');
+      }
+    }
+  });
+}
+
+// Auto-sync on changes (debounced)
+let syncTimeout;
+function scheduleSync() {
+  if (!GistSync.isConnected()) return;
+  
+  clearTimeout(syncTimeout);
+  syncTimeout = setTimeout(async () => {
+    try {
+      await GistSync.push();
+      renderSettings();
+    } catch (e) {
+      console.warn('Auto-sync failed:', e.message);
+    }
+  }, 3000); // 3 second debounce
+}
+
 // ========== INIT ==========
 function init() {
   // Load data (creates defaults if first run)
@@ -766,7 +1107,7 @@ function init() {
   // Log first-run if new
   if (data.activity.length === 0) {
     logActivity('system', '🚀 <strong>The DelQuro Files</strong> initialized — ready to capture!');
-    logActivity('system', '💡 Tip: Press Alt+N for quick capture, Alt+1/2/3 to switch tabs');
+    logActivity('system', '💡 Tip: Press Alt+N for quick capture, Alt+1/2/3/4 to switch tabs');
   }
   
   // Render everything
@@ -775,14 +1116,28 @@ function init() {
   // Bind events
   initEvents();
   initShortcuts();
+  initSettings();
   
   // Make delete functions global for onclick handlers
   window.deleteIdea = deleteIdea;
   window.deleteProject = deleteProject;
   window.editProject = editProject;
   
-  console.log('%c DelQuro Files v1.0.0 ', 'background: #6c5ce7; color: white; font-weight: bold; padding: 4px 8px; border-radius: 4px;');
-  console.log('Ready. Alt+N = new idea, Alt+1/2/3 = switch tabs');
+  // Auto-pull from GitHub on startup if connected
+  if (GistSync.isConnected()) {
+    setTimeout(async () => {
+      try {
+        await GistSync.pull();
+        logActivity('system', '🔄 Auto-synced from GitHub on startup');
+        toast('🔄 Data synced from cloud');
+      } catch (e) {
+        console.warn('Startup sync failed:', e.message);
+      }
+    }, 1000);
+  }
+  
+  console.log('%c DelQuro Files v1.1.0 ', 'background: #6c5ce7; color: white; font-weight: bold; padding: 4px 8px; border-radius: 4px;');
+  console.log('Ready. Alt+N = new idea, Alt+1/2/3/4 = switch tabs, GitHub sync enabled');
 }
 
 // Go!

@@ -53,6 +53,21 @@
 - [x] Copy to clipboard
 - [x] GitHub-ready: just push and enable Pages
 
+### Slice 6 — GitHub Sync (2026-08-15)
+**Goal**: Login + data sync across devices via GitHub Gist.
+- [x] Settings view with GitHub token input
+- [x] Connect/disconnect GitHub account
+- [x] Token verification (checks valid GitHub user)
+- [x] Auto-create private Gist for data storage
+- [x] Push data to Gist after every change (3s debounce)
+- [x] Pull data from Gist on app startup
+- [x] Smart merge: remote wins conflicts, local-only items preserved
+- [x] Token stored obfuscated in localStorage
+- [x] Sync status display (connected, last sync time, gist ID)
+- [x] Manual sync button
+- [x] Auto-sync on idea/project add/edit/delete
+- [x] Clear all data option (danger zone)
+
 ---
 
 ## Design Decisions
@@ -61,6 +76,10 @@
 3. **localStorage** — instant persistence, no server needed
 4. **CSS custom properties** — easy theming
 5. **JSON export** — portable, human-readable, git-friendly
+6. **GitHub Gist sync** — free, no backend needed, uses existing GitHub account
+7. **Token obfuscation** — not real encryption but prevents casual viewing in localStorage
+8. **Debounced sync** — 3s delay prevents API spam while typing
+9. **Smart merge** — combines local + remote without data loss
 
 ---
 
@@ -68,3 +87,6 @@
 - User requested: Full-stack idea logger + project tracker
 - Key requirements: quick capture, Arena.ai/GitHub links, mobile-first, GitHub Pages hosting, fully functional on first run, vertical slice builds, complete change logging
 - Approach: Static SPA with localStorage, no build step, drop-in deployable
+- User requested: Login + data sync across devices
+- Chosen approach: GitHub Personal Access Token + Gist API (stays in GitHub ecosystem)
+- Implementation: Token stored obfuscated, data syncs to private Gist, auto-sync on changes, pull on startup

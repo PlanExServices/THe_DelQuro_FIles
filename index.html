@@ -36,6 +36,9 @@
       <button class="nav-tab" data-view="activity">
         📋 Log <span class="tab-count" id="count-activity">0</span>
       </button>
+      <button class="nav-tab" data-view="settings">
+        ⚙️
+      </button>
     </nav>
   </header>
 
@@ -166,6 +169,63 @@
         <div class="empty-icon">📋</div>
         <div class="empty-title">Log is empty</div>
         <div class="empty-desc">Every action you take gets logged here automatically.</div>
+      </div>
+    </div>
+
+    <!-- === SETTINGS VIEW === -->
+    <div class="view" id="view-settings">
+      <div class="settings-section">
+        <div class="settings-title">🔗 GitHub Sync</div>
+        <div class="settings-desc">Connect your GitHub account to sync data across devices. Data saves to a private Gist.</div>
+        
+        <div id="github-connected" class="hidden">
+          <div style="background: rgba(0,200,83,0.1); border: 1px solid rgba(0,200,83,0.3); border-radius: var(--radius-md); padding: 14px; margin-bottom: 14px;">
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+              <span style="font-size: 20px;">✅</span>
+              <strong style="color: var(--success);">Connected</strong>
+            </div>
+            <div style="font-size: 0.85rem; color: var(--text-secondary);">
+              Syncing to Gist: <code id="gist-id-display" style="font-family: var(--font-mono); font-size: 0.8rem; background: var(--bg-primary); padding: 2px 6px; border-radius: 4px;"></code>
+            </div>
+            <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 8px;">
+              Last sync: <span id="last-sync-time">Never</span>
+            </div>
+          </div>
+          <div class="settings-actions">
+            <button class="btn btn-primary" id="btn-sync-now">🔄 Sync Now</button>
+            <button class="btn btn-ghost" id="btn-disconnect">Disconnect</button>
+          </div>
+        </div>
+
+        <div id="github-disconnected">
+          <div class="form-row">
+            <label class="form-label">GitHub Personal Access Token</label>
+            <input type="password" class="form-input" id="github-token" placeholder="ghp_xxxxxxxxxxxx">
+            <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 6px; line-height: 1.5;">
+              Create a token at <a href="https://github.com/settings/tokens/new?scopes=gist&description=DelQuro%20Files" target="_blank" style="color: var(--accent); text-decoration: underline;">github.com/settings/tokens</a> with <strong>gist</strong> scope.
+            </div>
+          </div>
+          <div class="settings-actions">
+            <button class="btn btn-primary" id="btn-connect-github">Connect GitHub</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="settings-section">
+        <div class="settings-title">📦 Data Management</div>
+        <div class="settings-desc">Export all your data as JSON for backup, or import from a previous export.</div>
+        <div class="settings-actions">
+          <button class="btn btn-primary" id="btn-export-settings">⬇ Export All Data</button>
+          <button class="btn btn-ghost" id="btn-import-settings">⬆ Import Data</button>
+        </div>
+      </div>
+
+      <div class="settings-section">
+        <div class="settings-title">⚠️ Danger Zone</div>
+        <div class="settings-desc">Permanently delete all local data. This cannot be undone.</div>
+        <div class="settings-actions">
+          <button class="btn btn-danger" id="btn-clear-all">🗑️ Delete All Data</button>
+        </div>
       </div>
     </div>
 
