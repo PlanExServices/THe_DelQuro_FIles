@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#0a0a0f">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>The DelQuro Files</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect rx='20' width='100' height='100' fill='%236c5ce7'/><text x='50' y='68' font-size='52' text-anchor='middle' fill='white' font-weight='bold' font-family='sans-serif'>DQ</text></svg>">
+</head>
+<body>
+
+<div class="app">
+
+  <!-- ===== HEADER ===== -->
+  <header class="header">
+    <div class="header-top">
+      <div class="logo">
+        <div class="logo-icon">DQ</div>
+        <div class="logo-text">Del<span>Quro</span> Files</div>
+      </div>
+      <div class="header-actions">
+        <button class="icon-btn" id="btn-export" title="Export data">⬇</button>
+        <button class="icon-btn" id="btn-import" title="Import data">⬆</button>
+      </div>
+    </div>
+    <nav class="nav-tabs">
+      <button class="nav-tab active" data-view="ideas">
+        💡 Ideas <span class="tab-count" id="count-ideas">0</span>
+      </button>
+      <button class="nav-tab" data-view="projects">
+        📁 Projects <span class="tab-count" id="count-projects">0</span>
+      </button>
+      <button class="nav-tab" data-view="activity">
+        📋 Log <span class="tab-count" id="count-activity">0</span>
+      </button>
+    </nav>
+  </header>
+
+  <!-- ===== SEARCH ===== -->
+  <div class="search-bar">
+    <div class="search-input-wrap">
+      <span class="search-icon">🔍</span>
+      <input type="text" class="search-input" id="search-input" placeholder="Search ideas, projects, tags...">
+    </div>
+  </div>
+
+  <!-- ===== MAIN CONTENT ===== -->
+  <main class="main">
+
+    <!-- === IDEAS VIEW === -->
+    <div class="view active" id="view-ideas">
+      <!-- Quick Capture -->
+      <div class="quick-capture" id="quick-capture">
+        <div class="capture-header">⚡ Quick Capture</div>
+        <textarea class="capture-textarea" id="idea-input" placeholder="What's on your mind? Capture it fast..." rows="2"></textarea>
+        <div class="capture-footer">
+          <div class="capture-tags" id="capture-tags">
+            <div class="tag" data-tag="feature">🏷 feature</div>
+            <div class="tag" data-tag="bug">🐛 bug</div>
+            <div class="tag" data-tag="design">🎨 design</div>
+            <div class="tag" data-tag="improvement">✨ improve</div>
+            <div class="tag-input-wrap">
+              <input type="text" class="tag-input" id="tag-input" placeholder="+ tag">
+            </div>
+          </div>
+          <button class="btn-capture" id="btn-save-idea">Save</button>
+        </div>
+      </div>
+
+      <!-- Filter Bar -->
+      <div class="filter-bar" id="filter-bar">
+        <button class="filter-tag active" data-filter="all">All</button>
+      </div>
+
+      <!-- Ideas List -->
+      <div class="section-header">
+        <span class="section-title">Recent Ideas</span>
+        <span class="section-count" id="ideas-count-label">0 ideas</span>
+      </div>
+      <div class="ideas-list" id="ideas-list"></div>
+      <div class="empty-state hidden" id="ideas-empty">
+        <div class="empty-icon">💡</div>
+        <div class="empty-title">No ideas yet</div>
+        <div class="empty-desc">Your next big idea starts here. Type above and hit Save.</div>
+      </div>
+    </div>
+
+    <!-- === PROJECTS VIEW === -->
+    <div class="view" id="view-projects">
+      <!-- Stats -->
+      <div class="stats-bar" id="project-stats">
+        <div class="stat-card">
+          <div class="stat-value" id="stat-total">0</div>
+          <div class="stat-label">Projects</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="stat-active">0</div>
+          <div class="stat-label">Active</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="stat-completed">0</div>
+          <div class="stat-label">Done</div>
+        </div>
+      </div>
+
+      <!-- Add Project Button -->
+      <button class="btn btn-primary" id="btn-show-add-project" style="width:100%; margin-bottom:16px; padding:12px;">
+        + New Project
+      </button>
+
+      <!-- Add Project Form -->
+      <div class="add-form hidden" id="add-project-form">
+        <div class="form-title" id="form-title">New Project</div>
+        <input type="hidden" id="edit-project-id" value="">
+        <div class="form-row">
+          <label class="form-label">Project Name</label>
+          <input type="text" class="form-input" id="proj-name" placeholder="My Awesome App">
+        </div>
+        <div class="form-row">
+          <label class="form-label">Description</label>
+          <textarea class="form-textarea" id="proj-desc" placeholder="What does this project do?"></textarea>
+        </div>
+        <div class="form-row">
+          <label class="form-label">Status</label>
+          <select class="form-select" id="proj-status">
+            <option value="idea">💡 Idea</option>
+            <option value="active">🟢 Active</option>
+            <option value="paused">🟡 Paused</option>
+            <option value="completed">🔵 Completed</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <label class="form-label">Arena.ai Link</label>
+          <input type="url" class="form-input" id="proj-arena" placeholder="https://arena.ai/...">
+        </div>
+        <div class="form-row">
+          <label class="form-label">GitHub Link</label>
+          <input type="url" class="form-input" id="proj-github" placeholder="https://github.com/...">
+        </div>
+        <div class="form-actions">
+          <button class="btn btn-ghost" id="btn-cancel-project">Cancel</button>
+          <button class="btn btn-primary" id="btn-save-project">Save Project</button>
+        </div>
+      </div>
+
+      <!-- Projects List -->
+      <div class="projects-grid" id="projects-list"></div>
+      <div class="empty-state hidden" id="projects-empty">
+        <div class="empty-icon">📁</div>
+        <div class="empty-title">No projects yet</div>
+        <div class="empty-desc">Track your apps and projects. Add your first one above.</div>
+      </div>
+    </div>
+
+    <!-- === ACTIVITY VIEW === -->
+    <div class="view" id="view-activity">
+      <div class="section-header">
+        <span class="section-title">Activity Log</span>
+        <button class="btn btn-ghost" id="btn-clear-log" style="font-size:0.78rem; padding:4px 12px;">Clear</button>
+      </div>
+      <div class="activity-list" id="activity-list"></div>
+      <div class="empty-state hidden" id="activity-empty">
+        <div class="empty-icon">📋</div>
+        <div class="empty-title">Log is empty</div>
+        <div class="empty-desc">Every action you take gets logged here automatically.</div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- ===== FAB ===== -->
+  <button class="fab" id="fab" title="Quick capture">💡</button>
+
+</div>
+
+<!-- Toast Container -->
+<div class="toast-container" id="toast-container"></div>
+
+<!-- Import Modal -->
+<div class="modal-overlay hidden" id="import-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Import Data</div>
+      <button class="icon-btn" id="btn-close-import">✕</button>
+    </div>
+    <p style="font-size:0.85rem; color:var(--text-secondary); margin-bottom:14px;">
+      Paste your exported JSON data below, or select a file.
+    </p>
+    <div class="form-row">
+      <textarea class="form-textarea" id="import-text" placeholder="Paste JSON here..." style="min-height:120px; font-family:var(--font-mono); font-size:0.8rem;"></textarea>
+    </div>
+    <div class="form-row">
+      <label class="form-label" style="cursor:pointer;">
+        Or choose a file:
+        <input type="file" id="import-file" accept=".json" style="margin-top:6px; color:var(--text-secondary);">
+      </label>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-ghost" id="btn-cancel-import">Cancel</button>
+      <button class="btn btn-primary" id="btn-do-import">Import</button>
+    </div>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
