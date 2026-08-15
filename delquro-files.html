@@ -1,0 +1,1216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>The DelQuro Files</title>
+<!-- ==========================================================================
+     The DelQuro Files — single-file HTML edition (v0.11.0)
+     Zero dependencies. No server. No install.
+     - Open this file directly in any browser, or host it on GitHub Pages.
+     - Data is saved in this browser (localStorage). Use Export to back it up,
+       and Import to restore on another device.
+     ========================================================================== -->
+<style>
+:root {
+  --bg: #090d16; --bg2: #0c1120; --panel: #10182b; --panel2: #151f36;
+  --border: #22304c; --border2: #2c3d5e; --text: #eaf0fb; --muted: #93a2c2; --faint: #5c6c90;
+  --cyan: #38ccff; --violet: #9d8cff; --green: #35d9a0; --amber: #ffb224; --pink: #ff6fae; --blue: #5b9dff; --red: #ff5f6d;
+  --radius: 14px;
+  --mono: ui-monospace, "SF Mono", "JetBrains Mono", Consolas, "Liberation Mono", monospace;
+  --sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; height: 100%; }
+body {
+  font-family: var(--sans); color: var(--text); font-size: 15px; line-height: 1.45;
+  background: radial-gradient(900px 500px at 85% -10%, rgba(56,204,255,0.08), transparent 60%),
+              radial-gradient(800px 500px at -10% 110%, rgba(157,140,255,0.10), transparent 60%), var(--bg);
+}
+::selection { background: rgba(56,204,255,0.25); }
+* { scrollbar-width: thin; scrollbar-color: var(--border2) transparent; }
+*::-webkit-scrollbar { width: 9px; height: 9px; }
+*::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 8px; }
+html { -webkit-text-size-adjust: 100%; }
+body { -webkit-tap-highlight-color: transparent; overscroll-behavior-y: contain; }
+button, a, select, input, textarea, .nav-item, .tab { touch-action: manipulation; }
+a { color: var(--cyan); text-decoration: none; }
+button { font-family: inherit; }
+.mono, code, pre { font-family: var(--mono); }
+
+#app { display: flex; flex-direction: column; min-height: 100vh; }
+#sidebar { display: none; }
+.brand { display: flex; gap: 11px; align-items: center; padding: 2px 6px 6px; }
+.brand-mark {
+  width: 38px; height: 38px; flex: 0 0 auto; display: grid; place-items: center; color: var(--cyan);
+  background: linear-gradient(135deg, rgba(56,204,255,0.16), rgba(157,140,255,0.16));
+  border: 1px solid var(--border2); border-radius: 11px; box-shadow: 0 0 18px rgba(56,204,255,0.12) inset;
+}
+.brand-text h1 { margin: 0; font-size: 15.5px; font-weight: 700; letter-spacing: 0.2px; line-height: 1.15; }
+.brand-text span { font-size: 11px; color: var(--muted); letter-spacing: 0.4px; }
+
+#nav { display: flex; flex-direction: column; gap: 2px; flex: 1; overflow-y: auto; }
+.nav-item {
+  display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 9px;
+  color: var(--muted); font-size: 13.5px; cursor: pointer; transition: background 0.12s, color 0.12s;
+}
+.nav-item:hover { background: rgba(255,255,255,0.04); color: var(--text); }
+.nav-item.on { background: linear-gradient(90deg, rgba(56,204,255,0.14), rgba(157,140,255,0.07)); color: var(--text); box-shadow: inset 2px 0 0 var(--cyan); }
+.nav-ic { display: grid; place-items: center; color: var(--faint); }
+.nav-item.on .nav-ic { color: var(--cyan); }
+.nav-l { flex: 1; }
+.nav-c {
+  min-width: 20px; text-align: center; font-size: 11px; font-weight: 600; color: var(--cyan);
+  background: rgba(56,204,255,0.12); border: 1px solid rgba(56,204,255,0.25); border-radius: 8px; padding: 1px 6px; font-family: var(--mono);
+}
+.nav-c:empty { display: none; }
+
+.sidebar-foot { border-top: 1px solid var(--border); padding-top: 12px; display: flex; flex-direction: column; gap: 8px; }
+.foot-btns { display: flex; gap: 6px; }
+.foot-btns .btn { flex: 1; justify-content: center; }
+.storage { display: flex; align-items: center; gap: 7px; font-size: 11px; color: var(--faint); padding: 0 4px; }
+.storage .dot { width: 8px; height: 8px; border-radius: 50%; flex: 0 0 auto; background: var(--green); box-shadow: 0 0 6px rgba(53,217,160,0.7); }
+.storage.mem .dot { background: var(--amber); box-shadow: 0 0 6px rgba(255,178,36,0.7); }
+
+#content { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+#topbar {
+  position: sticky; top: 0; z-index: 20; display: flex; align-items: center; gap: 10px;
+  padding: 10px 14px; background: rgba(9,13,22,0.85); backdrop-filter: blur(10px); border-bottom: 1px solid var(--border);
+}
+.qc-label { display: none; font-size: 11px; font-weight: 700; letter-spacing: 1.4px; color: var(--cyan); font-family: var(--mono); white-space: nowrap; }
+.quick-capture { display: none; flex: 1; gap: 8px; }
+#qc-type { background: var(--panel); color: var(--muted); border: 1px solid var(--border); border-radius: 10px; padding: 0 10px; font-size: 13px; outline: none; }
+#qc-input {
+  flex: 1; background: var(--panel); border: 1px solid var(--border); border-radius: 10px; color: var(--text);
+  padding: 11px 14px; font-size: 14px; outline: none; transition: border 0.15s, box-shadow 0.15s;
+}
+#qc-input:focus { border-color: var(--cyan); box-shadow: 0 0 0 3px rgba(56,204,255,0.12); }
+#qc-input::placeholder { color: var(--faint); }
+
+#main { padding: 16px 14px 132px; max-width: 1180px; width: 100%; margin: 0 auto; }
+
+.page-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 20px; }
+.ph-txt h2 { margin: 0; font-size: 22px; font-weight: 700; letter-spacing: -0.2px; }
+.ph-txt p { margin: 4px 0 0; color: var(--muted); font-size: 13.5px; }
+.ph-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.block-title { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; color: var(--muted); margin: 26px 0 12px; }
+.spacer { flex: 1; }
+
+.btn {
+  display: inline-flex; align-items: center; gap: 7px; border: 1px solid var(--border2); background: var(--panel);
+  color: var(--text); padding: 8px 13px; border-radius: 10px; font-size: 13.5px; font-weight: 600; cursor: pointer; min-height: 44px;
+  transition: background 0.12s, border 0.12s, transform 0.06s;
+}
+.btn:hover { background: var(--panel2); }
+.btn:active { transform: translateY(1px); }
+.btn.primary { background: linear-gradient(135deg, #0ea5e9, #38ccff); border-color: transparent; color: #04121c; }
+.btn.primary:hover { filter: brightness(1.07); }
+.btn.ghost { background: transparent; }
+.btn.danger { color: var(--red); border-color: rgba(255,95,109,0.4); }
+.btn.danger:hover { background: rgba(255,95,109,0.1); }
+.btn.sm { padding: 5px 10px; font-size: 12.5px; border-radius: 8px; }
+.btn.link-btn.arena { border-color: rgba(56,204,255,0.4); color: var(--cyan); background: rgba(56,204,255,0.08); }
+.btn.link-btn.arena:hover { background: rgba(56,204,255,0.14); }
+.btn.link-btn.github { border-color: rgba(157,140,255,0.4); color: var(--violet); background: rgba(157,140,255,0.08); }
+.btn.link-btn.github:hover { background: rgba(157,140,255,0.14); }
+.btn.link-btn.off { color: var(--faint); border-style: dashed; background: transparent; }
+
+.icon-btn {
+  display: inline-grid; place-items: center; width: 40px; height: 40px; border: 1px solid transparent;
+  background: transparent; color: var(--muted); border-radius: 10px; cursor: pointer; transition: background 0.12s, color 0.12s;
+}
+.icon-btn:hover { background: var(--panel2); color: var(--text); }
+.icon-btn.danger:hover { color: var(--red); background: rgba(255,95,109,0.1); }
+.icon-btn.mini { width: 34px; height: 34px; }
+select.mini, select { background: var(--panel); color: var(--muted); border: 1px solid var(--border); border-radius: 9px; padding: 6px 9px; font-size: 13px; outline: none; cursor: pointer; }
+select:focus { border-color: var(--cyan); }
+
+.seg { display: inline-flex; background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 3px; gap: 2px; }
+.seg-btn { border: none; background: transparent; color: var(--muted); padding: 5px 11px; border-radius: 8px; font-size: 12.5px; font-weight: 600; cursor: pointer; }
+.seg-btn:hover { color: var(--text); }
+.seg-btn.on { background: var(--panel2); color: var(--cyan); box-shadow: inset 0 0 0 1px var(--border2); }
+
+.card { background: linear-gradient(180deg, var(--panel), var(--bg2)); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 18px; }
+
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 14px; margin-bottom: 8px; }
+.stat {
+  display: flex; flex-direction: column; gap: 4px; padding: 16px 18px; cursor: pointer; border: none; text-align: left;
+  background: linear-gradient(180deg, var(--panel), var(--bg2)); border: 1px solid var(--border); border-radius: var(--radius); color: var(--text);
+  transition: border 0.12s, transform 0.12s;
+}
+.stat:hover { border-color: var(--border2); transform: translateY(-2px); }
+.stat-ic { opacity: 0.9; }
+.stat-n { font-size: 30px; font-weight: 800; font-family: var(--mono); line-height: 1; }
+.stat-l { font-size: 12.5px; color: var(--muted); }
+.stat.cyan .stat-ic, .stat.cyan .stat-n { color: var(--cyan); }
+.stat.violet .stat-ic, .stat.violet .stat-n { color: var(--violet); }
+.stat.green .stat-ic, .stat.green .stat-n { color: var(--green); }
+.stat.amber .stat-ic, .stat.amber .stat-n { color: var(--amber); }
+.stat.pink .stat-ic, .stat.pink .stat-n { color: var(--pink); }
+.stat.blue .stat-ic, .stat.blue .stat-n { color: var(--blue); }
+.last-build { display: flex; align-items: center; gap: 10px; margin-top: 16px; font-size: 14px; }
+
+.list { display: flex; flex-direction: column; gap: 10px; }
+.log-row {
+  display: flex; gap: 14px; align-items: flex-start; background: linear-gradient(180deg, var(--panel), var(--bg2));
+  border: 1px solid var(--border); border-radius: var(--radius); padding: 12px 16px;
+}
+.log-main { flex: 1; min-width: 0; }
+.log-title { font-weight: 600; font-size: 14.5px; }
+.log-body { color: var(--muted); font-size: 13.5px; margin-top: 3px; overflow-wrap: anywhere; }
+.log-meta { display: flex; align-items: center; gap: 8px; margin-top: 6px; font-size: 12px; color: var(--faint); flex-wrap: wrap; }
+
+.type-badge {
+  flex: 0 0 auto; font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px;
+  padding: 3px 8px; border-radius: 7px; border: 1px solid; margin-top: 2px;
+}
+.type-badge.project { color: #b7a7ff; border-color: rgba(157,140,255,0.35); background: rgba(157,140,255,0.12); }
+.type-badge.idea { color: #6fdcff; border-color: rgba(56,204,255,0.35); background: rgba(56,204,255,0.10); }
+.type-badge.changelog { color: #6ff0c0; border-color: rgba(53,217,160,0.35); background: rgba(53,217,160,0.10); }
+.type-badge.build { color: #ffcf6b; border-color: rgba(255,178,36,0.35); background: rgba(255,178,36,0.10); }
+.type-badge.code { color: #ff9dc8; border-color: rgba(255,111,174,0.35); background: rgba(255,111,174,0.10); }
+.type-badge.dialogue { color: #93bbff; border-color: rgba(91,157,255,0.35); background: rgba(91,157,255,0.10); }
+
+.badge {
+  display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 700; padding: 2px 9px;
+  border-radius: 999px; border: 1px solid; text-transform: capitalize;
+}
+.badge.st-active, .badge.st-done, .badge.st-success, .badge.st-shipped { color: var(--green); border-color: rgba(53,217,160,0.4); background: rgba(53,217,160,0.1); }
+.badge.st-planned, .badge.st-inbox { color: var(--cyan); border-color: rgba(56,204,255,0.4); background: rgba(56,204,255,0.1); }
+.badge.st-considering { color: var(--violet); border-color: rgba(157,140,255,0.4); background: rgba(157,140,255,0.1); }
+.badge.st-paused { color: var(--amber); border-color: rgba(255,178,36,0.4); background: rgba(255,178,36,0.1); }
+.badge.st-archived { color: var(--muted); border-color: var(--border2); background: rgba(255,255,255,0.04); }
+.badge.st-failed { color: var(--red); border-color: rgba(255,95,109,0.4); background: rgba(255,95,109,0.1); }
+.badge.st-running { color: var(--amber); border-color: rgba(255,178,36,0.4); background: rgba(255,178,36,0.1); animation: pulse 1.6s ease-in-out infinite; }
+@keyframes pulse { 50% { opacity: 0.55; } }
+
+.kind { font-size: 10.5px; font-weight: 700; padding: 1px 7px; border-radius: 6px; border: 1px solid; text-transform: uppercase; letter-spacing: 0.4px; }
+.kind-feature { color: var(--green); border-color: rgba(53,217,160,0.35); background: rgba(53,217,160,0.1); }
+.kind-fix { color: var(--amber); border-color: rgba(255,178,36,0.35); background: rgba(255,178,36,0.1); }
+.kind-refactor { color: var(--violet); border-color: rgba(157,140,255,0.35); background: rgba(157,140,255,0.1); }
+.kind-docs { color: var(--blue); border-color: rgba(91,157,255,0.35); background: rgba(91,157,255,0.1); }
+.kind-other { color: var(--muted); border-color: var(--border2); background: rgba(255,255,255,0.05); }
+
+.chips { display: inline-flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.chip { font-family: var(--mono); font-size: 11.5px; color: var(--muted); background: rgba(255,255,255,0.05); border: 1px solid var(--border); border-radius: 7px; padding: 2px 8px; }
+.chip.lang { color: var(--pink); border-color: rgba(255,111,174,0.3); background: rgba(255,111,174,0.08); }
+
+.proj-tag {
+  display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 600; color: var(--violet);
+  background: rgba(157,140,255,0.1); border: 1px solid rgba(157,140,255,0.28); border-radius: 7px; padding: 1px 8px; cursor: pointer;
+}
+.proj-tag:hover { background: rgba(157,140,255,0.18); }
+.meta-tag { color: var(--faint); }
+.pill { display: inline-flex; align-items: center; gap: 4px; font-size: 11.5px; color: var(--muted); background: rgba(255,255,255,0.04); border: 1px solid var(--border); border-radius: 7px; padding: 2px 8px; }
+
+.idea-card { display: flex; flex-direction: column; gap: 8px; }
+.idea-top { display: flex; align-items: center; gap: 12px; }
+.idea-title { margin: 0; font-size: 15px; font-weight: 650; flex: 1; }
+.idea-body { margin: 0; color: var(--muted); font-size: 13.5px; overflow-wrap: anywhere; white-space: pre-wrap; }
+.idea-foot { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.idea-foot time { font-size: 12px; color: var(--faint); }
+
+.project-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); gap: 16px; }
+.project-card { display: flex; flex-direction: column; gap: 10px; }
+.pc-head { display: flex; align-items: center; gap: 10px; }
+.pc-name { margin: 0; font-size: 16px; font-weight: 700; flex: 1; }
+.pc-tagline { margin: 0; color: var(--muted); font-size: 13.5px; }
+.pc-links { display: flex; flex-direction: column; gap: 8px; }
+.link-wrap { display: flex; gap: 6px; align-items: center; }
+.link-wrap .btn { flex: 1; justify-content: center; }
+.pc-counts { display: flex; gap: 6px; flex-wrap: wrap; }
+.pc-actions { display: flex; gap: 6px; border-top: 1px solid var(--border); padding-top: 10px; }
+
+.pd-hero {
+  display: flex; flex-direction: column; gap: 14px;
+  background: linear-gradient(135deg, rgba(56,204,255,0.06), rgba(157,140,255,0.07)), var(--panel);
+  border: 1px solid var(--border); border-radius: var(--radius); padding: 22px 24px; margin-bottom: 22px;
+}
+.pd-top { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.pd-top h2 { margin: 0; font-size: 22px; }
+.pd-tagline { color: var(--muted); margin: 0; }
+.pd-desc { margin: 0; color: var(--text); font-size: 14px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.pd-links { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.pd-links .btn { font-size: 14px; padding: 10px 16px; }
+.pd-stats { display: flex; gap: 8px; flex-wrap: wrap; }
+.pd-section { margin: 26px 0 10px; display: flex; align-items: center; gap: 10px; }
+.pd-section h3 { margin: 0; font-size: 15px; }
+.pd-section .count { color: var(--faint); font-family: var(--mono); font-size: 12px; }
+.back-link { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); font-size: 13px; margin-bottom: 14px; cursor: pointer; }
+.back-link:hover { color: var(--text); }
+
+.timeline { display: flex; flex-direction: column; }
+.cl-row { display: flex; gap: 16px; padding: 4px 0; }
+.cl-rail { flex: 0 0 70px; display: flex; flex-direction: column; align-items: center; }
+.cl-rail::after { content: ""; width: 1px; flex: 1; background: var(--border); margin-top: 8px; }
+.cl-row:last-child .cl-rail::after { background: transparent; }
+.ver { font-family: var(--mono); font-size: 11.5px; font-weight: 700; color: var(--cyan); background: rgba(56,204,255,0.1); border: 1px solid rgba(56,204,255,0.3); border-radius: 7px; padding: 3px 8px; white-space: nowrap; }
+.cl-body { flex: 1; padding-bottom: 16px; min-width: 0; }
+.cl-title { font-weight: 650; font-size: 14.5px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.cl-text { color: var(--muted); font-size: 13.5px; margin-top: 4px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.cl-meta { display: flex; align-items: center; gap: 8px; margin-top: 6px; font-size: 12px; color: var(--faint); flex-wrap: wrap; }
+
+.build-row { display: flex; flex-direction: column; gap: 8px; }
+.br-head { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; }
+.br-no { font-weight: 700; font-size: 14px; }
+.br-summary { color: var(--text); font-size: 14px; }
+.br-log { border: 1px solid var(--border); border-radius: 9px; overflow: hidden; }
+.br-log summary { cursor: pointer; padding: 8px 12px; font-size: 12.5px; color: var(--muted); background: rgba(255,255,255,0.03); user-select: none; }
+.br-log pre { margin: 0; padding: 12px 14px; background: #070b13; color: #c7d4f0; font-size: 12.5px; line-height: 1.5; overflow: auto; max-height: 320px; white-space: pre-wrap; }
+.dot { width: 10px; height: 10px; border-radius: 50%; flex: 0 0 auto; }
+.dot.st-success { background: var(--green); box-shadow: 0 0 8px rgba(53,217,160,0.7); }
+.dot.st-failed { background: var(--red); box-shadow: 0 0 8px rgba(255,95,109,0.7); }
+.dot.st-running { background: var(--amber); box-shadow: 0 0 8px rgba(255,178,36,0.7); animation: pulse 1.2s ease-in-out infinite; }
+
+.code-row { display: flex; flex-direction: column; gap: 8px; }
+.cr-head { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; }
+.cr-title { margin: 0; font-size: 15px; font-weight: 650; }
+.cr-notes { color: var(--muted); font-size: 13px; }
+.cr-code { margin: 0; background: #070b13; border: 1px solid var(--border); border-radius: 10px; padding: 13px 15px; font-size: 12.5px; line-height: 1.55; color: #c9d6f2; overflow: auto; max-height: 380px; white-space: pre; }
+
+.chat { display: flex; flex-direction: column; gap: 12px; }
+.bubble { align-self: flex-start; max-width: 92%; background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 10px 14px; }
+.bubble.me { align-self: flex-end; background: rgba(56,204,255,0.07); border-color: rgba(56,204,255,0.3); }
+.bubble-head { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--faint); flex-wrap: wrap; }
+.bubble-head .speaker { font-weight: 700; color: var(--text); }
+.bubble-head .role { font-family: var(--mono); font-size: 10.5px; color: var(--cyan); }
+.bubble-body { margin-top: 6px; font-size: 14px; white-space: pre-wrap; overflow-wrap: anywhere; }
+
+.search-box { margin-bottom: 20px; }
+#search-input { width: 100%; background: var(--panel); border: 1px solid var(--border); border-radius: 12px; color: var(--text); padding: 14px 18px; font-size: 16px; outline: none; transition: border 0.15s, box-shadow 0.15s; }
+#search-input:focus { border-color: var(--cyan); box-shadow: 0 0 0 3px rgba(56,204,255,0.12); }
+.sr-group { margin-bottom: 20px; }
+.sr-group h3 { font-size: 12px; text-transform: uppercase; letter-spacing: 1.2px; color: var(--muted); margin: 0 0 8px; }
+.sr-group h3 .count { color: var(--faint); font-family: var(--mono); }
+.sr-row { display: flex; align-items: center; gap: 12px; width: 100%; text-align: left; background: linear-gradient(180deg, var(--panel), var(--bg2)); border: 1px solid var(--border); border-radius: 11px; padding: 11px 14px; margin-bottom: 6px; cursor: pointer; color: var(--text); }
+.sr-row:hover { border-color: var(--border2); }
+.sr-t { font-weight: 650; font-size: 14px; }
+.sr-b { color: var(--muted); font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 40ch; }
+
+.empty { display: flex; flex-direction: column; align-items: center; gap: 8px; color: var(--faint); padding: 44px 20px; border: 1px dashed var(--border); border-radius: var(--radius); text-align: center; }
+.empty p { margin: 0; font-size: 14px; }
+.hint { color: var(--faint); font-size: 14px; text-align: center; padding: 30px; }
+time { cursor: default; }
+
+.modal-backdrop { position: fixed; inset: 0; background: rgba(4,6,12,0.7); backdrop-filter: blur(4px); display: flex; align-items: flex-end; justify-content: center; z-index: 100; }
+.modal { width: 100%; max-width: none; max-height: 88vh; overflow: auto; background: var(--bg2); border: 1px solid var(--border2); border-bottom: none; border-radius: 18px 18px 0 0; padding: 18px 18px calc(18px + env(safe-area-inset-bottom)); box-shadow: 0 -12px 50px rgba(0,0,0,0.55); }
+.modal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+.modal-head h3 { margin: 0; font-size: 17px; }
+.modal-close { color: var(--muted); }
+.modal-close:hover { color: var(--text); }
+.field { display: block; margin-bottom: 12px; }
+.field-label { display: block; font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.7px; color: var(--muted); margin-bottom: 5px; }
+.field input, .field textarea, .field select { width: 100%; background: var(--panel); border: 1px solid var(--border); border-radius: 10px; color: var(--text); padding: 11px 12px; font-size: 16px; outline: none; font-family: inherit; }
+.field textarea { resize: vertical; min-height: 72px; }
+.field textarea.mono { font-family: var(--mono); font-size: 13px; }
+.field input:focus, .field textarea:focus, .field select:focus { border-color: var(--cyan); box-shadow: 0 0 0 3px rgba(56,204,255,0.1); }
+.modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 18px; }
+.confirm-box h3 { margin: 0 0 6px; font-size: 16px; }
+.confirm-box p { margin: 0 0 4px; color: var(--muted); font-size: 14px; }
+
+#toast-root { position: fixed; bottom: 22px; right: 22px; display: flex; flex-direction: column; gap: 8px; z-index: 200; }
+.toast { background: var(--panel2); border: 1px solid var(--border2); border-left: 3px solid var(--green); color: var(--text); padding: 11px 16px; border-radius: 10px; font-size: 13.5px; box-shadow: 0 10px 34px rgba(0,0,0,0.45); animation: slideIn 0.2s ease; }
+.toast.error { border-left-color: var(--red); }
+.toast.out { opacity: 0; transform: translateY(6px); transition: opacity 0.3s, transform 0.3s; }
+@keyframes slideIn { from { opacity: 0; transform: translateY(8px); } }
+
+/* ===== mobile components (base) ===== */
+.tb-brand { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; }
+.tb-brand .brand-mark { width: 34px; height: 34px; flex: 0 0 auto; }
+.tb-brand h1 { margin: 0; font-size: 14.5px; font-weight: 700; line-height: 1.15; }
+.tb-brand span { display: block; font-size: 10.5px; color: var(--muted); letter-spacing: 0.3px; }
+.tb-menu { flex: 0 0 auto; }
+
+#tabbar {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 40;
+  display: flex; background: rgba(12, 17, 32, 0.96); backdrop-filter: blur(12px);
+  border-top: 1px solid var(--border);
+  padding: 6px 4px calc(6px + env(safe-area-inset-bottom));
+}
+.tab {
+  flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px;
+  background: none; border: none; color: var(--muted); padding: 6px 2px; border-radius: 10px;
+  font-size: 10.5px; font-weight: 600; min-height: 50px; position: relative; cursor: pointer;
+}
+.tab.on { color: var(--cyan); }
+.tab-ic { display: grid; place-items: center; }
+.tab-c {
+  position: absolute; top: 2px; right: 50%; transform: translateX(18px);
+  min-width: 17px; height: 17px; font-size: 10px; font-weight: 700; color: #04121c; background: var(--cyan);
+  border-radius: 9px; display: grid; place-items: center; padding: 0 4px; font-family: var(--mono);
+}
+.tab-c:empty { display: none; }
+
+#fab {
+  position: fixed; right: 16px; bottom: calc(78px + env(safe-area-inset-bottom)); z-index: 45;
+  width: 58px; height: 58px; border-radius: 50%; border: none; color: #04121c;
+  background: linear-gradient(135deg, #0ea5e9, #38ccff); display: grid; place-items: center;
+  box-shadow: 0 8px 26px rgba(56, 204, 255, 0.35); cursor: pointer;
+}
+#fab:active { transform: scale(0.94); }
+
+.sheet-backdrop { position: fixed; inset: 0; background: rgba(4, 6, 12, 0.6); backdrop-filter: blur(3px); z-index: 100; display: flex; align-items: flex-end; justify-content: center; }
+.sheet {
+  width: 100%; max-width: 560px; max-height: 88vh; overflow: auto; background: var(--bg2);
+  border: 1px solid var(--border2); border-bottom: none; border-radius: 18px 18px 0 0;
+  padding: 16px 18px calc(16px + env(safe-area-inset-bottom)); box-shadow: 0 -12px 50px rgba(0, 0, 0, 0.5);
+  animation: sheetUp 0.22s ease;
+}
+@keyframes sheetUp { from { transform: translateY(100%); } }
+.sheet-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.sheet-head h3 { margin: 0; font-size: 16px; }
+.sheet-list { display: flex; flex-direction: column; gap: 2px; }
+.sheet-item {
+  display: flex; align-items: center; gap: 13px; width: 100%; text-align: left; background: none; border: none;
+  color: var(--text); padding: 13px 10px; border-radius: 10px; font-size: 15px; cursor: pointer; min-height: 48px;
+}
+.sheet-item:active { background: rgba(255, 255, 255, 0.06); }
+.sheet-item.danger { color: var(--red); }
+.sheet-sep { height: 1px; background: var(--border); margin: 8px 0; }
+.sheet-foot { padding: 10px 8px 2px; }
+
+.capture-seg { width: 100%; margin-bottom: 12px; }
+.capture-seg .seg-btn { flex: 1; padding: 11px 4px; }
+.capture-input {
+  width: 100%; background: var(--panel); border: 1px solid var(--border); border-radius: 12px; color: var(--text);
+  padding: 12px 14px; font-size: 16px; outline: none; font-family: inherit; resize: vertical; min-height: 96px; margin-bottom: 12px;
+}
+.capture-input:focus { border-color: var(--cyan); box-shadow: 0 0 0 3px rgba(56, 204, 255, 0.12); }
+.capture-go { width: 100%; justify-content: center; padding: 13px; font-size: 15px; }
+
+.idea-card, .project-card, .cl-row { cursor: pointer; }
+.idea-card:active, .project-card:active { background: linear-gradient(180deg, var(--panel2), var(--bg2)); }
+.sr-row, .sheet-item, .tab { -webkit-tap-highlight-color: transparent; }
+
+/* ===== desktop (>= 901px) ===== */
+@media (min-width: 901px) {
+  #app { display: grid; grid-template-columns: 236px 1fr; min-height: 100vh; }
+  #sidebar {
+    display: flex; position: sticky; top: 0; height: 100vh; flex-direction: column;
+    background: linear-gradient(180deg, var(--bg2), var(--bg)); border-right: 1px solid var(--border);
+    padding: 18px 14px 14px; gap: 14px;
+  }
+  #content { flex: 1; }
+  #topbar { padding: 12px 22px; }
+  #main { padding: 26px 28px 60px; }
+  .tb-brand, #tabbar, #fab, #menu-btn { display: none; }
+  .quick-capture { display: flex; }
+  .qc-label { display: block; }
+  .btn { min-height: 0; }
+  .icon-btn { width: 30px; height: 30px; }
+  .icon-btn.mini { width: 24px; height: 24px; }
+  .field input, .field textarea, .field select { font-size: 14px; }
+  .modal-backdrop { align-items: center; padding: 20px; }
+  .modal { max-width: 560px; width: 100%; border-radius: 16px; border-bottom: 1px solid var(--border2); padding: 20px 22px; }
+  .bubble { max-width: 78%; }
+  .cl-rail { flex-basis: 84px; }
+  .project-grid { grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); }
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <aside id="sidebar">
+    <div class="brand">
+      <div class="brand-mark"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l2.4 7.6L22 12l-7.6 2.4L12 22l-2.4-7.6L2 12l7.6-2.4z"/></svg></div>
+      <div class="brand-text"><h1>The DelQuro Files</h1><span>build log · project tracker</span></div>
+    </div>
+    <nav id="nav"></nav>
+    <div class="sidebar-foot">
+      <div class="foot-btns">
+        <button class="btn ghost sm" data-action="export" title="Download a JSON backup">⇩ Export</button>
+        <button class="btn ghost sm" data-action="import" title="Restore from a JSON backup">⇧ Import</button>
+        <button class="btn ghost sm danger" data-action="clear" title="Delete everything">✕ Clear</button>
+      </div>
+      <div class="storage" id="storage"><span class="dot"></span><span id="storage-label">saved in this browser</span></div>
+    </div>
+  </aside>
+  <div id="content">
+    <header id="topbar">
+      <div class="tb-brand">
+        <div class="brand-mark"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l2.4 7.6L22 12l-7.6 2.4L12 22l-2.4-7.6L2 12l7.6-2.4z"/></svg></div>
+        <div class="brand-text"><h1>The DelQuro Files</h1><span>build log · project tracker</span></div>
+      </div>
+      <div class="qc-label">LOG&nbsp;IT</div>
+      <div class="quick-capture">
+        <select id="qc-type" title="What are you logging?"></select>
+        <input id="qc-input" placeholder="Log an idea…" autocomplete="off" spellcheck="false">
+        <button id="qc-btn" class="btn primary">Log ↵</button>
+      </div>
+      <button id="menu-btn" class="icon-btn tb-menu" aria-label="Menu" title="Menu"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/><circle cx="5" cy="12" r="1.6"/></svg></button>
+    </header>
+    <main id="main"></main>
+  </div>
+</div>
+<nav id="tabbar" aria-label="Primary"></nav>
+<button id="fab" aria-label="Log something" title="Log something"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
+<div id="modal-root"></div>
+<div id="sheet-root"></div>
+<div id="toast-root"></div>
+<input type="file" id="import-file" accept=".json,application/json" style="display:none">
+<script>
+"use strict";
+
+/* ============================ helpers ============================ */
+const $ = (sel, root = document) => root.querySelector(sel);
+const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
+function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])); }
+const cap = s => (s ? s.charAt(0).toUpperCase() + s.slice(1) : "");
+const opts = arr => arr.map(x => ({ v: x, l: cap(x) }));
+
+function relTime(iso) {
+  const d = new Date(iso); if (isNaN(d)) return "";
+  const s = Math.floor((Date.now() - d.getTime()) / 1000);
+  if (s < 45) return "just now";
+  const m = Math.floor(s / 60); if (m < 60) return m + "m ago";
+  const h = Math.floor(m / 60); if (h < 24) return h + "h ago";
+  const days = Math.floor(h / 24); if (days < 7) return days + "d ago";
+  return fmtAbs(iso);
+}
+function fmtAbs(iso) {
+  const d = new Date(iso); if (isNaN(d)) return "";
+  return d.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" }) +
+    " · " + d.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
+}
+
+const ICONS = {
+  dashboard: '<rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/>',
+  idea: '<path d="M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12.7c.6.5 1 1.4 1 2.3h6c0-.9.4-1.8 1-2.3A7 7 0 0 0 12 2z"/>',
+  project: '<path d="M21 8l-9-5-9 5v8l9 5 9-5V8z"/><path d="M3 8l9 5 9-5"/><path d="M12 13v8"/>',
+  changelog: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/>',
+  build: '<path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.8 2.8-2.4-2.4 2.2-2.4z"/>',
+  code: '<polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>',
+  dialogue: '<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>',
+  masterlog: '<line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>',
+  search: '<circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.5" y2="16.5"/>',
+  plus: '<line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>',
+  edit: '<path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.1 2.1 0 0 1 3 3L12 15l-4 1 1-4z"/>',
+  trash: '<polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>',
+  copy: '<rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>',
+  external: '<path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>',
+  github: '<path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.9a3.4 3.4 0 0 0-1-2.6c3-.3 6.1-1.5 6.1-6.6a5.1 5.1 0 0 0-1.4-3.6 4.8 4.8 0 0 0-.1-3.6s-1.2-.4-3.9 1.5a13.4 13.4 0 0 0-7 0C6.3 2.1 5.1 2.5 5.1 2.5a4.8 4.8 0 0 0-.1 3.6A5.1 5.1 0 0 0 3.6 9.7c0 5.1 3.1 6.3 6.1 6.6a3.4 3.4 0 0 0-1 2.6V22"/>',
+  arena: '<path d="M12 2l2.4 7.6L22 12l-7.6 2.4L12 22l-2.4-7.6L2 12l7.6-2.4z"/>',
+  back: '<polyline points="15 18 9 12 15 6"/>',
+};
+function icon(name, size = 18) {
+  return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${ICONS[name] || ICONS.masterlog}</svg>`;
+}
+
+const NAV = [
+  { id: "dashboard", label: "Dashboard", icon: "dashboard" },
+  { id: "ideas", label: "Ideas", icon: "idea" },
+  { id: "projects", label: "Projects", icon: "project" },
+  { id: "changelog", label: "Change Log", icon: "changelog" },
+  { id: "builds", label: "Builds", icon: "build" },
+  { id: "code", label: "Code", icon: "code" },
+  { id: "dialogues", label: "Dialogues", icon: "dialogue" },
+  { id: "masterlog", label: "Master Log", icon: "masterlog" },
+  { id: "search", label: "Search", icon: "search" },
+];
+const TYPE_LABEL = { project: "Project", idea: "Idea", changelog: "Change", build: "Build", code: "Code", dialogue: "Dialog" };
+
+const TABS = [
+  { id: "dashboard", label: "Home", icon: "dashboard" },
+  { id: "ideas", label: "Ideas", icon: "idea", count: "ideas" },
+  { id: "projects", label: "Projects", icon: "project", count: "projects" },
+  { id: "masterlog", label: "Master", icon: "masterlog" },
+  { id: "search", label: "Search", icon: "search" },
+];
+
+/* ============================ storage ============================ */
+const DB_KEY = "delquro-files-v1";
+const store = {
+  available: (function () { try { localStorage.setItem("__t", "1"); localStorage.removeItem("__t"); return true; } catch (e) { return false; } })(),
+  load() {
+    if (this.available) { try { const r = JSON.parse(localStorage.getItem(DB_KEY)); if (r && r.projects) return r; } catch (e) {} }
+    return null;
+  },
+  save(data) {
+    if (this.available) { try { localStorage.setItem(DB_KEY, JSON.stringify(data)); } catch (e) {} }
+  },
+};
+
+function emptyDB() {
+  return { nextId: 1, projects: [], ideas: [], changelog: [], builds: [], code: [], dialogues: [] };
+}
+let db = store.load() || emptyDB();
+
+function uid() { return db.nextId++; }
+function nowISO() { return new Date().toISOString(); }
+function projectName(id) { const p = db.projects.find(x => x.id === id); return p ? p.name : ""; }
+
+function addRow(kind, obj) { obj.id = uid(); db[kind].unshift(obj); persist(); }
+function updateRow(kind, id, patch) { const r = db[kind].find(x => x.id === id); if (r) { Object.assign(r, patch); persist(); } }
+function deleteRow(kind, id) { db[kind] = db[kind].filter(x => x.id !== id); persist(); }
+function persist() { store.save(db); updateStorageDot(); updateCounts(); }
+
+/* ============================ state / nav ============================ */
+const state = { view: "dashboard", projectId: null, ideaFilter: "all", mlFilter: "all", clProject: "", bProject: "", cProject: "", dProject: "" };
+
+function go(view, projectId = null) { state.view = view; state.projectId = projectId; render(); }
+
+function buildNav() {
+  $("#nav").innerHTML = NAV.map(n => `
+    <div class="nav-item" data-nav="${n.id}">
+      <span class="nav-ic">${icon(n.icon, 18)}</span>
+      <span class="nav-l">${n.label}</span>
+      <span class="nav-c" data-count="${n.id}"></span>
+    </div>`).join("");
+  $$("#nav .nav-item").forEach(el => el.addEventListener("click", () => go(el.dataset.nav)));
+}
+
+function buildTabbar() {
+  $("#tabbar").innerHTML = TABS.map(t => `
+    <button class="tab" data-nav="${t.id}" aria-label="${t.label}">
+      <span class="tab-ic">${icon(t.icon, 22)}</span>
+      <span class="tab-l">${t.label}</span>
+      ${t.count ? `<span class="tab-c" data-tcount="${t.count}"></span>` : ""}
+    </button>`).join("");
+  $$("#tabbar .tab").forEach(el => el.addEventListener("click", () => { go(el.dataset.nav); window.scrollTo({ top: 0 }); }));
+}
+
+function updateCounts() {
+  const map = { ideas: db.ideas.length, projects: db.projects.length, changelog: db.changelog.length,
+                builds: db.builds.length, code: db.code.length, dialogues: db.dialogues.length };
+  Object.entries(map).forEach(([k, v]) => {
+    const el = $('[data-count="' + k + '"]'); if (el) el.textContent = v;
+    const t = $('[data-tcount="' + k + '"]'); if (t) t.textContent = v;
+  });
+}
+
+function updateStorageDot() {
+  const label = store.available ? "saved in this browser" : "preview mode — not saved";
+  const set = (id, lid) => {
+    const e = $(id); if (!e) return;
+    e.classList.toggle("mem", !store.available);
+    const l = $(lid); if (l) l.textContent = label;
+  };
+  set("#storage", "#storage-label");
+  set("#storage2", "#storage-label2");
+}
+
+/* ============================ toast / modal ============================ */
+function toast(msg, type = "ok") {
+  const el = document.createElement("div");
+  el.className = "toast " + type; el.textContent = msg;
+  $("#toast-root").appendChild(el);
+  setTimeout(() => { el.classList.add("out"); setTimeout(() => el.remove(), 320); }, 2400);
+}
+function openModal(html) {
+  const root = $("#modal-root");
+  root.innerHTML = `<div class="modal-backdrop"><div class="modal">${html}</div></div>`;
+  $$(".modal-close", root).forEach(b => b.addEventListener("click", closeModal));
+  $(".modal-backdrop", root).addEventListener("click", e => { if (e.target.classList.contains("modal-backdrop")) closeModal(); });
+}
+function closeModal() { $("#modal-root").innerHTML = ""; }
+
+function openSheet(html) {
+  const root = $("#sheet-root");
+  root.innerHTML = `<div class="sheet-backdrop"><div class="sheet">${html}</div></div>`;
+  $$(".sheet-close", root).forEach(b => b.addEventListener("click", closeSheet));
+  $(".sheet-backdrop", root).addEventListener("click", e => { if (e.target.classList.contains("sheet-backdrop")) closeSheet(); });
+}
+function closeSheet() { $("#sheet-root").innerHTML = ""; }
+
+function confirmBox(msg) {
+  return new Promise(res => {
+    openModal(`<div class="confirm-box"><h3>Are you sure?</h3><p>${esc(msg)}</p>
+      <div class="modal-actions"><button class="btn ghost" id="c-no">Cancel</button>
+      <button class="btn danger" id="c-yes">Delete</button></div></div>`);
+    $("#c-yes").onclick = () => { closeModal(); res(true); };
+    $("#c-no").onclick = () => { closeModal(); res(false); };
+  });
+}
+
+function openForm(cfg) {
+  const fields = cfg.fields.map(f => {
+    let c;
+    if (f.type === "textarea") c = `<textarea name="${f.key}" rows="${f.rows || 3}" placeholder="${esc(f.placeholder || "")}">${esc(f.value || "")}</textarea>`;
+    else if (f.type === "select") c = `<select name="${f.key}">${(f.options || []).map(o => `<option value="${esc(o.v)}" ${String(o.v) === String(f.value) ? "selected" : ""}>${esc(o.l)}</option>`).join("")}</select>`;
+    else c = `<input type="${f.type || "text"}" name="${f.key}" value="${esc(f.value || "")}" placeholder="${esc(f.placeholder || "")}" ${f.required ? "required" : ""}>`;
+    return `<label class="field"><span class="field-label">${esc(f.label)}</span>${c}</label>`;
+  }).join("");
+  openModal(`<div class="modal-head"><h3>${esc(cfg.title)}</h3><button class="icon-btn modal-close">✕</button></div>
+    <form id="mform">${fields}
+      <div class="modal-actions"><button type="button" class="btn ghost modal-close">Cancel</button>
+      <button type="submit" class="btn primary">${esc(cfg.submit || "Save")}</button></div></form>`);
+  $("#mform").addEventListener("submit", e => {
+    e.preventDefault();
+    const data = {};
+    cfg.fields.forEach(f => { data[f.key] = e.target.elements[f.key] ? e.target.elements[f.key].value : ""; });
+    cfg.onSubmit(data);
+    closeModal(); toast("Saved ✓");
+  });
+}
+
+async function copyText(t) {
+  try { await navigator.clipboard.writeText(t); }
+  catch (e) {
+    const ta = document.createElement("textarea");
+    ta.value = t; document.body.appendChild(ta); ta.select();
+    try { document.execCommand("copy"); } catch (e2) {}
+    ta.remove();
+  }
+  toast("Copied ✓");
+}
+
+/* ============================ shared renderers ============================ */
+function pageHead(title, sub, actionsHTML = "") {
+  return `<div class="page-head"><div class="ph-txt"><h2>${esc(title)}</h2>${sub ? `<p>${esc(sub)}</p>` : ""}</div>
+    <div class="ph-actions">${actionsHTML}</div></div>`;
+}
+function emptyState(msg) { return `<div class="empty">${icon("masterlog", 22)}<p>${esc(msg)}</p></div>`; }
+function countPill(t, n) { return `<span class="pill">${icon(t, 12)} ${n}</span>`; }
+function projTag(id) {
+  const name = projectName(id);
+  return name ? `<button class="proj-tag" data-action="open-project" data-id="${id}">${esc(name)}</button>` : "";
+}
+
+function logRowHTML(item) {
+  return `<div class="log-row">
+    <span class="type-badge ${item.type}">${TYPE_LABEL[item.type] || item.type}</span>
+    <div class="log-main">
+      <div class="log-title">${esc(item.title)}</div>
+      ${item.body ? `<div class="log-body">${esc(item.body)}</div>` : ""}
+      <div class="log-meta">
+        ${item.meta ? `<span class="meta-tag">${esc(item.meta)}</span>` : ""}
+        ${item.projectId ? projTag(item.projectId) : ""}
+        <time title="${fmtAbs(item.createdAt)}">${relTime(item.createdAt)}</time>
+      </div>
+    </div>
+  </div>`;
+}
+
+function masterLog(typeFilter) {
+  const out = [];
+  db.projects.forEach(p => out.push({ type: "project", id: p.id, title: p.name, body: p.tagline, meta: "status: " + p.status, projectId: p.id, createdAt: p.createdAt }));
+  const add = (t, arr, tf, bf, mf) => arr.forEach(i => out.push({ type: t, id: i.id, title: tf(i), body: bf(i), meta: mf(i), projectId: i.projectId || null, createdAt: i.createdAt }));
+  add("idea", db.ideas, i => i.title, i => i.body, i => "status: " + i.status + (i.tags ? " · " + i.tags : ""));
+  add("changelog", db.changelog, i => (i.version ? i.version + " · " : "") + i.title, i => i.body, i => i.kind);
+  add("build", db.builds, i => (i.buildNo ? i.buildNo + " · " : "") + i.summary, i => "", i => i.status);
+  add("code", db.code, i => i.title, i => i.notes, i => i.language || "code");
+  add("dialogue", db.dialogues, i => i.speaker, i => i.content, i => i.role);
+  let res = typeFilter ? out.filter(o => o.type === typeFilter) : out;
+  res.sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || ""));
+  return res;
+}
+
+function searchAll(q) {
+  q = q.toLowerCase();
+  const like = s => (s || "").toLowerCase().includes(q);
+  return {
+    projects: db.projects.filter(p => [p.name, p.tagline, p.description, p.stack].some(like)),
+    ideas: db.ideas.filter(i => [i.title, i.body, i.tags].some(like)),
+    changelog: db.changelog.filter(i => [i.title, i.body, i.version, i.kind].some(like)),
+    builds: db.builds.filter(i => [i.buildNo, i.summary, i.log, i.status].some(like)),
+    code: db.code.filter(i => [i.title, i.code, i.notes, i.language].some(like)),
+    dialogues: db.dialogues.filter(i => [i.content, i.speaker, i.role].some(like)),
+  };
+}
+
+/* ============================ sections ============================ */
+function render() {
+  $$("#nav .nav-item").forEach(el => el.classList.toggle("on", el.dataset.nav === state.view));
+  $$("#tabbar .tab").forEach(el => el.classList.toggle("on", el.dataset.nav === state.view));
+  const m = $("#main");
+  if (state.view === "project" && state.projectId) { m.innerHTML = renderProject(state.projectId); return; }
+  const map = { dashboard: renderDashboard, ideas: renderIdeas, projects: renderProjects, changelog: renderChangelog, builds: renderBuilds, code: renderCode, dialogues: renderDialogues, masterlog: renderMasterlog, search: renderSearch };
+  m.innerHTML = (map[state.view] || renderDashboard)();
+}
+
+function renderDashboard() {
+  const c = { ideas: db.ideas.length, projects: db.projects.length, changelog: db.changelog.length, builds: db.builds.length, code: db.code.length, dialogues: db.dialogues.length };
+  const cards = [["Ideas", c.ideas, "idea", "cyan"], ["Projects", c.projects, "project", "violet"], ["Change Log", c.changelog, "changelog", "green"], ["Builds", c.builds, "build", "amber"], ["Code", c.code, "code", "pink"], ["Dialogues", c.dialogues, "dialogue", "blue"]];
+  const last = db.builds[0];
+  const recent = masterLog().slice(0, 10);
+  const ROUTE = { Ideas: "ideas", Projects: "projects", "Change Log": "changelog", Builds: "builds", Code: "code", Dialogues: "dialogues" };
+  return `${pageHead("Dashboard", "Your build universe at a glance.")}
+    <div class="stats">${cards.map(([l, v, ic, cl]) => `<button class="stat ${cl}" data-goto="${ROUTE[l]}"><span class="stat-ic">${icon(ic, 20)}</span><span class="stat-n">${v}</span><span class="stat-l">${l}</span></button>`).join("")}</div>
+    ${last ? `<div class="card last-build"><span class="badge st-${esc(last.status)}">${esc(last.status)}</span><span>Last build: <b>${esc((last.buildNo || "") + " " + last.summary)}</b>${last.projectId ? " · " + esc(projectName(last.projectId)) : ""}</span></div>` : ""}
+    <h2 class="block-title">Recent activity</h2>
+    <div class="list">${recent.length ? recent.map(logRowHTML).join("") : emptyState("Nothing yet — log something with the bar up top!")}</div>`;
+}
+
+function renderIdeas() {
+  const f = state.ideaFilter || "all";
+  const tabs = ["all", "inbox", "considering", "done", "archived"];
+  const filtered = f === "all" ? db.ideas : db.ideas.filter(i => i.status === f);
+  return `${pageHead("Ideas", "Quick thoughts, features, and half-baked genius.", `<div class="seg" id="idea-filter">${tabs.map(t => `<button class="seg-btn ${f === t ? "on" : ""}" data-filter="${t}">${cap(t)}</button>`).join("")}</div><button class="btn primary" data-action="new-idea">${icon("plus", 15)} New idea</button>`)}
+    <div class="list">${filtered.length ? filtered.map(ideaCard).join("") : emptyState("No ideas here yet — capture one with the bar up top.")}</div>`;
+}
+
+function ideaCard(i) {
+  const tags = (i.tags || "").split(",").map(t => t.trim()).filter(Boolean);
+  return `<div class="card idea-card" data-action="edit-idea" data-id="${i.id}">
+    <div class="idea-top"><h3 class="idea-title">${esc(i.title)}</h3>
+      <select class="mini" data-action="set-idea-status" data-id="${i.id}" title="Status">
+        ${["inbox", "considering", "done", "archived"].map(s => `<option value="${s}" ${i.status === s ? "selected" : ""}>${cap(s)}</option>`).join("")}</select></div>
+    ${i.body ? `<p class="idea-body">${esc(i.body)}</p>` : ""}
+    <div class="idea-foot">
+      ${tags.map(t => `<span class="chip">#${esc(t)}</span>`).join("")}
+      ${i.projectId ? projTag(i.projectId) : ""}
+      <span class="spacer"></span>
+      <time title="${fmtAbs(i.createdAt)}">${relTime(i.createdAt)}</time>
+      <button class="icon-btn" title="Promote to project" data-action="promote-idea" data-id="${i.id}">${icon("project", 15)}</button>
+      <button class="icon-btn" title="Edit" data-action="edit-idea" data-id="${i.id}">${icon("edit", 15)}</button>
+      <button class="icon-btn danger" title="Delete" data-action="del-idea" data-id="${i.id}">${icon("trash", 15)}</button>
+    </div></div>`;
+}
+
+function renderProjects() {
+  return `${pageHead("Projects", "Everything you're building — with a straight line to Arena.ai and GitHub.", `<button class="btn primary" data-action="new-project">${icon("plus", 15)} New project</button>`)}
+    ${db.projects.length ? `<div class="project-grid">${db.projects.map(projectCard).join("")}</div>` : emptyState("No projects yet. Create one, or promote an idea into a project.")}`;
+}
+
+function countsFor(pid) {
+  return { ideas: db.ideas.filter(x => x.projectId === pid).length, changelog: db.changelog.filter(x => x.projectId === pid).length,
+           builds: db.builds.filter(x => x.projectId === pid).length, code: db.code.filter(x => x.projectId === pid).length,
+           dialogues: db.dialogues.filter(x => x.projectId === pid).length };
+}
+
+function projectCard(p) {
+  const stack = (p.stack || "").split(",").map(s => s.trim()).filter(Boolean);
+  const c = countsFor(p.id);
+  return `<div class="card project-card" data-action="open-project" data-id="${p.id}">
+    <div class="pc-head"><h3 class="pc-name">${esc(p.name)}</h3><span class="badge st-${esc(p.status)}">${esc(p.status)}</span></div>
+    ${p.tagline ? `<p class="pc-tagline">${esc(p.tagline)}</p>` : ""}
+    ${stack.length ? `<div class="chips">${stack.map(s => `<span class="chip mono">${esc(s)}</span>`).join("")}</div>` : ""}
+    <div class="pc-links">${linkBtn("arena", p.arena_link, "Open in Arena.ai", "arena", p.id)}${linkBtn("github", p.github_link, "Open in GitHub", "github", p.id)}</div>
+    <div class="pc-counts">${countPill("idea", c.ideas)} ${countPill("changelog", c.changelog)} ${countPill("build", c.builds)} ${countPill("code", c.code)} ${countPill("dialogue", c.dialogues)}</div>
+    <div class="pc-actions">
+      <button class="btn ghost sm" data-action="open-project" data-id="${p.id}">Open</button>
+      <button class="btn ghost sm" data-action="edit-project" data-id="${p.id}">${icon("edit", 13)} Edit</button>
+      <button class="btn ghost sm danger" data-action="del-project" data-id="${p.id}">${icon("trash", 13)}</button>
+    </div></div>`;
+}
+
+function linkBtn(kind, url, label, iconName, pid) {
+  if (!url) return `<button class="btn link-btn ${kind} off" data-action="edit-project" data-id="${pid}">${icon(iconName, 14)} Set ${kind === "arena" ? "Arena.ai" : "GitHub"} link</button>`;
+  return `<div class="link-wrap"><a class="btn link-btn ${kind}" href="${esc(url)}" target="_blank" rel="noopener">${icon(iconName, 14)} ${label} ↗</a>
+    <button class="icon-btn mini" data-action="copy-link" data-url="${esc(url)}" title="Copy link">${icon("copy", 13)}</button></div>`;
+}
+
+function renderProject(id) {
+  const p = db.projects.find(x => x.id === id);
+  if (!p) return emptyState("Project not found.");
+  const stack = (p.stack || "").split(",").map(s => s.trim()).filter(Boolean);
+  const changelog = db.changelog.filter(x => x.projectId === id);
+  const builds = db.builds.filter(x => x.projectId === id);
+  const code = db.code.filter(x => x.projectId === id);
+  const dialogues = db.dialogues.filter(x => x.projectId === id);
+  const c = countsFor(id);
+  const addBtn = (action) => `<button class="btn ghost sm" data-action="${action}" data-pid="${id}">${icon("plus", 13)} Add</button>`;
+  return `<button class="back-link" data-action="goto" data-view="projects">${icon("back", 15)} All projects</button>
+    <div class="pd-hero">
+      <div class="pd-top"><h2>${esc(p.name)}</h2><span class="badge st-${esc(p.status)}">${esc(p.status)}</span></div>
+      ${p.tagline ? `<p class="pd-tagline">${esc(p.tagline)}</p>` : ""}
+      ${stack.length ? `<div class="chips">${stack.map(s => `<span class="chip mono">${esc(s)}</span>`).join("")}</div>` : ""}
+      ${p.description ? `<p class="pd-desc">${esc(p.description)}</p>` : ""}
+      <div class="pd-links">
+        ${p.arena_link ? `<a class="btn link-btn arena" href="${esc(p.arena_link)}" target="_blank" rel="noopener">${icon("arena", 15)} Open in Arena.ai ↗</a>` : ""}
+        ${p.github_link ? `<a class="btn link-btn github" href="${esc(p.github_link)}" target="_blank" rel="noopener">${icon("github", 15)} Open in GitHub ↗</a>` : ""}
+        ${p.arena_link ? `<button class="btn ghost sm" data-action="copy-link" data-url="${esc(p.arena_link)}">${icon("copy", 13)} Arena</button>` : ""}
+        ${p.github_link ? `<button class="btn ghost sm" data-action="copy-link" data-url="${esc(p.github_link)}">${icon("copy", 13)} GitHub</button>` : ""}
+        <span class="spacer"></span>
+        <button class="btn ghost sm" data-action="edit-project" data-id="${p.id}">${icon("edit", 13)} Edit</button>
+        <button class="btn ghost sm danger" data-action="del-project" data-id="${p.id}">${icon("trash", 13)} Delete</button>
+      </div>
+      <div class="pd-stats">${countPill("idea", c.ideas)} ${countPill("changelog", c.changelog)} ${countPill("build", c.builds)} ${countPill("code", c.code)} ${countPill("dialogue", c.dialogues)}</div>
+    </div>
+    <div class="pd-section"><h3>Change Log</h3><span class="count">${changelog.length}</span><span class="spacer"></span>${addBtn("new-change")}</div>
+    <div class="timeline">${changelog.length ? changelog.map(clRow).join("") : emptyState("No changes logged for this project yet.")}</div>
+    <div class="pd-section"><h3>Builds</h3><span class="count">${builds.length}</span><span class="spacer"></span>${addBtn("new-build")}</div>
+    <div class="list">${builds.length ? builds.map(buildRow).join("") : emptyState("No builds logged yet.")}</div>
+    <div class="pd-section"><h3>Code</h3><span class="count">${code.length}</span><span class="spacer"></span>${addBtn("new-code")}</div>
+    <div class="list">${code.length ? code.map(codeRow).join("") : emptyState("No code snippets saved yet.")}</div>
+    <div class="pd-section"><h3>Dialogues</h3><span class="count">${dialogues.length}</span><span class="spacer"></span>${addBtn("new-dialogue")}</div>
+    <div class="chat">${dialogues.length ? dialogues.map(dlgBubble).join("") : emptyState("No dialog logged for this project yet.")}</div>`;
+}
+
+function projFilterSelect(idKey, stateKey, allLabel) {
+  const cur = state[stateKey] || "";
+  return `<select class="mini" id="${idKey}"><option value="">${allLabel}</option>${db.projects.map(p => `<option value="${p.id}" ${String(p.id) === String(cur) ? "selected" : ""}>${esc(p.name)}</option>`).join("")}</select>`;
+}
+
+function renderChangelog() {
+  const f = state.clProject || "";
+  const filtered = f ? db.changelog.filter(i => String(i.projectId) === String(f)) : db.changelog;
+  return `${pageHead("Change Log", "What changed, and why — versioned.", `${projFilterSelect("cl-project", "clProject", "All projects")}<button class="btn primary" data-action="new-change" data-pid="${f}">${icon("plus", 15)} New entry</button>`)}
+    <div class="timeline">${filtered.length ? filtered.map(clRow).join("") : emptyState("No changes logged yet.")}</div>`;
+}
+function clRow(c) {
+  return `<div class="cl-row" data-action="edit-change" data-id="${c.id}"><div class="cl-rail"><span class="ver">${c.version ? esc(c.version) : "·"}</span></div>
+    <div class="cl-body"><div class="cl-title">${esc(c.title)} <span class="kind kind-${esc(c.kind)}">${esc(c.kind)}</span></div>
+    ${c.body ? `<div class="cl-text">${esc(c.body)}</div>` : ""}
+    <div class="cl-meta">${c.projectId ? projTag(c.projectId) : ""}<time title="${fmtAbs(c.createdAt)}">${relTime(c.createdAt)}</time>
+      <button class="icon-btn mini" title="Edit" data-action="edit-change" data-id="${c.id}">${icon("edit", 12)}</button>
+      <button class="icon-btn mini danger" title="Delete" data-action="del-change" data-id="${c.id}">${icon("trash", 12)}</button>
+    </div></div></div>`;
+}
+
+function renderBuilds() {
+  const f = state.bProject || "";
+  const filtered = f ? db.builds.filter(i => String(i.projectId) === String(f)) : db.builds;
+  return `${pageHead("Builds", "Ship or sink — log it.", `${projFilterSelect("b-project", "bProject", "All projects")}<button class="btn primary" data-action="new-build" data-pid="${f}">${icon("plus", 15)} New build</button>`)}
+    <div class="list">${filtered.length ? filtered.map(buildRow).join("") : emptyState("No builds logged yet.")}</div>`;
+}
+function buildRow(b) {
+  return `<div class="card build-row"><div class="br-head">
+    <span class="dot st-${esc(b.status)}"></span><span class="br-no">${b.buildNo ? esc(b.buildNo) : "build"}</span>
+    <span class="badge st-${esc(b.status)}">${esc(b.status)}</span><span class="spacer"></span>
+    ${b.projectId ? projTag(b.projectId) : ""}<time title="${fmtAbs(b.createdAt)}">${relTime(b.createdAt)}</time>
+    <button class="icon-btn mini danger" title="Delete" data-action="del-build" data-id="${b.id}">${icon("trash", 12)}</button></div>
+    ${b.summary ? `<div class="br-summary">${esc(b.summary)}</div>` : ""}
+    ${b.log ? `<details class="br-log"><summary>build log</summary><pre>${esc(b.log)}</pre></details>` : ""}</div>`;
+}
+
+function renderCode() {
+  const f = state.cProject || "";
+  const filtered = f ? db.code.filter(i => String(i.projectId) === String(f)) : db.code;
+  return `${pageHead("Code", "Snippets worth keeping — copy in one click.", `${projFilterSelect("c-project", "cProject", "All projects")}<button class="btn primary" data-action="new-code" data-pid="${f}">${icon("plus", 15)} New snippet</button>`)}
+    <div class="list">${filtered.length ? filtered.map(codeRow).join("") : emptyState("No code saved yet.")}</div>`;
+}
+function codeRow(c) {
+  return `<div class="card code-row"><div class="cr-head">
+    <h3 class="cr-title">${esc(c.title)}</h3>${c.language ? `<span class="chip lang">${esc(c.language)}</span>` : ""}<span class="spacer"></span>
+    ${c.projectId ? projTag(c.projectId) : ""}<time title="${fmtAbs(c.createdAt)}">${relTime(c.createdAt)}</time>
+    <button class="icon-btn mini" title="Copy code" data-action="copy-code" data-id="${c.id}">${icon("copy", 13)}</button>
+    <button class="icon-btn mini danger" title="Delete" data-action="del-code" data-id="${c.id}">${icon("trash", 12)}</button></div>
+    ${c.notes ? `<div class="cr-notes">${esc(c.notes)}</div>` : ""}<pre class="cr-code">${esc(c.code)}</pre></div>`;
+}
+
+function renderDialogues() {
+  const f = state.dProject || "";
+  const filtered = f ? db.dialogues.filter(i => String(i.projectId) === String(f)) : db.dialogues;
+  return `${pageHead("Dialogues", "Conversations worth keeping. Nothing lost.", `${projFilterSelect("d-project", "dProject", "All projects")}<button class="btn primary" data-action="new-dialogue" data-pid="${f}">${icon("plus", 15)} New entry</button>`)}
+    <div class="chat">${filtered.length ? filtered.map(dlgBubble).join("") : emptyState("No dialog logged yet.")}</div>`;
+}
+function dlgBubble(d) {
+  const me = d.role === "user";
+  return `<div class="bubble ${me ? "me" : ""}"><div class="bubble-head">
+    <span class="speaker">${esc(d.speaker)}</span><span class="role">${esc(d.role)}</span>
+    ${d.projectId ? projTag(d.projectId) : ""}<time title="${fmtAbs(d.createdAt)}">${relTime(d.createdAt)}</time>
+    <button class="icon-btn mini" title="Edit" data-action="edit-dialogue" data-id="${d.id}">${icon("edit", 12)}</button>
+    <button class="icon-btn mini danger" title="Delete" data-action="del-dialogue" data-id="${d.id}">${icon("trash", 12)}</button></div>
+    <div class="bubble-body">${esc(d.content)}</div></div>`;
+}
+
+function renderMasterlog() {
+  const types = ["project", "idea", "changelog", "build", "code", "dialogue"];
+  const f = state.mlFilter || "all";
+  const items = masterLog(f).slice(0, 300);
+  return `${pageHead("Master Log", "Every single thing you've logged, in order.", `<div class="seg" id="ml-filter"><button class="seg-btn ${f === "all" ? "on" : ""}" data-ml="all">All</button>${types.map(t => `<button class="seg-btn ${f === t ? "on" : ""}" data-ml="${t}">${TYPE_LABEL[t]}</button>`).join("")}</div>`)}
+    <div class="list">${items.length ? items.map(logRowHTML).join("") : emptyState("Nothing logged yet.")}</div>`;
+}
+
+let searchTimer;
+function renderSearch() {
+  setTimeout(() => { const i = $("#search-input"); if (i) i.focus(); }, 0);
+  return `${pageHead("Search", "Find anything you logged.")}
+    <div class="search-box"><input id="search-input" placeholder="Search ideas, projects, changes, builds, code, dialog…" autocomplete="off" spellcheck="false"></div>
+    <div id="search-results"><p class="hint">Type to search across everything.</p></div>`;
+}
+function runSearch(q) {
+  q = q.trim();
+  const box = $("#search-results");
+  if (!q) { box.innerHTML = '<p class="hint">Type to search across everything.</p>'; return; }
+  const r = searchAll(q);
+  const groups = [["projects", "Projects"], ["ideas", "Ideas"], ["changelog", "Change Log"], ["builds", "Builds"], ["code", "Code"], ["dialogues", "Dialogues"]];
+  box.innerHTML = groups.map(([k, label]) => {
+    const items = r[k]; if (!items.length) return "";
+    return `<div class="sr-group"><h3>${label} <span class="count">${items.length}</span></h3>${items.map(it => searchRow(k, it)).join("")}</div>`;
+  }).join("") || emptyState("No matches.");
+}
+function searchRow(kind, it) {
+  if (kind === "projects") return `<button class="sr-row" data-action="open-project" data-id="${it.id}"><span class="type-badge project">Project</span><span class="sr-t">${esc(it.name)}</span><span class="sr-b">${esc(it.tagline || "")}</span></button>`;
+  const t = { ideas: "idea", changelog: "changelog", builds: "build", code: "code", dialogues: "dialogue" }[kind];
+  const title = it.title || it.summary || it.speaker || "";
+  const body = (it.body || it.notes || it.content || "").slice(0, 140);
+  return `<button class="sr-row" data-action="goto" data-view="${kind}"><span class="type-badge ${t}">${TYPE_LABEL[t]}</span><span class="sr-t">${esc(title)}</span><span class="sr-b">${esc(body)}</span></button>`;
+}
+
+/* ============================ forms ============================ */
+function projectForm(existing) {
+  const f = existing || {};
+  openForm({ title: existing ? "Edit project" : "New project", submit: "Save project", fields: [
+    { key: "name", label: "Name", required: true, value: f.name },
+    { key: "tagline", label: "Tagline", value: f.tagline, placeholder: "One-line summary" },
+    { key: "description", label: "Description", type: "textarea", value: f.description },
+    { key: "status", label: "Status", type: "select", value: f.status || "active", options: opts(["active", "planned", "paused", "shipped", "archived"]) },
+    { key: "stack", label: "Stack", value: f.stack, placeholder: "Python, SQLite, React (comma separated)" },
+    { key: "arena_link", label: "Arena.ai link", value: f.arena_link, placeholder: "https://arena.ai/…" },
+    { key: "github_link", label: "GitHub link", value: f.github_link, placeholder: "https://github.com/…" },
+  ], onSubmit(d) {
+    if (existing) updateRow("projects", existing.id, { name: d.name, tagline: d.tagline, description: d.description, status: d.status, stack: d.stack, arena_link: d.arena_link, github_link: d.github_link, updatedAt: nowISO() });
+    else addRow("projects", { name: d.name, tagline: d.tagline, description: d.description, status: d.status, stack: d.stack, arena_link: d.arena_link, github_link: d.github_link, createdAt: nowISO(), updatedAt: nowISO() });
+    render();
+  }});
+}
+
+function ideaForm(existing, pid) {
+  const f = existing || { projectId: pid || "" };
+  openForm({ title: existing ? "Edit idea" : "New idea", fields: [
+    { key: "title", label: "Title", required: true, value: f.title, placeholder: "What's the idea?" },
+    { key: "body", label: "Details", type: "textarea", value: f.body },
+    { key: "tags", label: "Tags", value: f.tags, placeholder: "fast, capture, idea (comma separated)" },
+    { key: "status", label: "Status", type: "select", value: f.status || "inbox", options: opts(["inbox", "considering", "done", "archived"]) },
+    { key: "projectId", label: "Project", type: "select", value: f.projectId || "", options: [{ v: "", l: "— none —" }, ...db.projects.map(p => ({ v: String(p.id), l: p.name }))] },
+  ], onSubmit(d) {
+    const pid2 = d.projectId ? +d.projectId : null;
+    if (existing) updateRow("ideas", existing.id, { title: d.title, body: d.body, tags: d.tags, status: d.status, projectId: pid2 });
+    else addRow("ideas", { title: d.title, body: d.body, tags: d.tags, status: d.status, projectId: pid2, createdAt: nowISO() });
+    render();
+  }});
+}
+
+function changeForm(existing, pid) {
+  const f = existing || { projectId: pid || "" };
+  openForm({ title: existing ? "Edit change" : "New change log entry", fields: [
+    { key: "title", label: "Title", required: true, value: f.title, placeholder: "What changed?" },
+    { key: "version", label: "Version", value: f.version, placeholder: "v1.2.0 (optional)" },
+    { key: "kind", label: "Kind", type: "select", value: f.kind || "feature", options: opts(["feature", "fix", "refactor", "docs", "other"]) },
+    { key: "body", label: "Details", type: "textarea", value: f.body },
+    { key: "projectId", label: "Project", type: "select", value: f.projectId || "", options: [{ v: "", l: "— none —" }, ...db.projects.map(p => ({ v: String(p.id), l: p.name }))] },
+  ], onSubmit(d) {
+    const pid2 = d.projectId ? +d.projectId : null;
+    if (existing) updateRow("changelog", existing.id, { title: d.title, version: d.version, kind: d.kind, body: d.body, projectId: pid2 });
+    else addRow("changelog", { title: d.title, version: d.version, kind: d.kind, body: d.body, projectId: pid2, createdAt: nowISO() });
+    render();
+  }});
+}
+
+function buildForm(existing, pid) {
+  const f = existing || { projectId: pid || "" };
+  openForm({ title: existing ? "Edit build" : "New build", fields: [
+    { key: "buildNo", label: "Build number", value: f.buildNo, placeholder: "b-002" },
+    { key: "status", label: "Status", type: "select", value: f.status || "success", options: opts(["success", "failed", "running"]) },
+    { key: "summary", label: "Summary", value: f.summary, placeholder: "One line on what this build is" },
+    { key: "log", label: "Build log", type: "textarea", rows: 6, value: f.log, placeholder: "paste output…" },
+    { key: "projectId", label: "Project", type: "select", value: f.projectId || "", options: [{ v: "", l: "— none —" }, ...db.projects.map(p => ({ v: String(p.id), l: p.name }))] },
+  ], onSubmit(d) {
+    const pid2 = d.projectId ? +d.projectId : null;
+    addRow("builds", { buildNo: d.buildNo, status: d.status, summary: d.summary, log: d.log, projectId: pid2, createdAt: nowISO() });
+    render();
+  }});
+}
+
+function codeForm(existing, pid) {
+  const f = existing || { projectId: pid || "" };
+  openForm({ title: existing ? "Edit snippet" : "New code snippet", fields: [
+    { key: "title", label: "Title", required: true, value: f.title, placeholder: "What is this snippet?" },
+    { key: "language", label: "Language", value: f.language, placeholder: "python, js, shell…" },
+    { key: "code", label: "Code", type: "textarea", rows: 8, value: f.code, placeholder: "paste code…" },
+    { key: "notes", label: "Notes", type: "textarea", value: f.notes },
+    { key: "projectId", label: "Project", type: "select", value: f.projectId || "", options: [{ v: "", l: "— none —" }, ...db.projects.map(p => ({ v: String(p.id), l: p.name }))] },
+  ], onSubmit(d) {
+    const pid2 = d.projectId ? +d.projectId : null;
+    if (existing) updateRow("code", existing.id, { title: d.title, language: d.language, code: d.code, notes: d.notes, projectId: pid2 });
+    else addRow("code", { title: d.title, language: d.language, code: d.code, notes: d.notes, projectId: pid2, createdAt: nowISO() });
+    render();
+  }});
+}
+
+function dialogueForm(existing, pid) {
+  const f = existing || { projectId: pid || "" };
+  openForm({ title: existing ? "Edit dialog entry" : "Log dialog", fields: [
+    { key: "speaker", label: "Speaker", value: f.speaker || "you" },
+    { key: "role", label: "Role", type: "select", value: f.role || "user", options: opts(["user", "assistant", "system", "other"]) },
+    { key: "content", label: "What was said", type: "textarea", rows: 5, value: f.content, required: true },
+    { key: "projectId", label: "Project", type: "select", value: f.projectId || "", options: [{ v: "", l: "— none —" }, ...db.projects.map(p => ({ v: String(p.id), l: p.name }))] },
+  ], onSubmit(d) {
+    const pid2 = d.projectId ? +d.projectId : null;
+    if (existing) updateRow("dialogues", existing.id, { speaker: d.speaker, role: d.role, content: d.content, projectId: pid2 });
+    else addRow("dialogues", { speaker: d.speaker, role: d.role, content: d.content, projectId: pid2, createdAt: nowISO() });
+    render();
+  }});
+}
+
+/* ============================ actions ============================ */
+const actions = {
+  "new-idea": () => ideaForm(),
+  "edit-idea": d => ideaForm(db.ideas.find(x => x.id === +d.id)),
+  "del-idea": async d => { if (await confirmBox("Delete this idea?")) { deleteRow("ideas", +d.id); render(); } },
+  "promote-idea": async d => {
+    const i = db.ideas.find(x => x.id === +d.id); if (!i) return;
+    const p = { name: i.title, tagline: i.tags, description: i.body, status: "planned", stack: "", arena_link: "", github_link: "", createdAt: nowISO(), updatedAt: nowISO() };
+    p.id = uid(); db.projects.unshift(p);
+    updateRow("ideas", i.id, { status: "done", projectId: p.id });
+    persist(); toast("Idea promoted to project ✓"); go("project", p.id);
+  },
+  "new-project": () => projectForm(),
+  "edit-project": d => projectForm(db.projects.find(x => x.id === +d.id)),
+  "del-project": async d => { if (await confirmBox("Delete this project? Its logged entries will be kept (unlinked).")) { deleteRow("projects", +d.id); render(); } },
+  "open-project": d => go("project", +d.id),
+  "goto": d => { closeSheet(); go(d.view); },
+  "export": () => { closeSheet(); exportBackup(); },
+  "import": () => { closeSheet(); importBackup(); },
+  "clear": () => { closeSheet(); clearAll(); },
+  "copy-link": d => copyText(d.url),
+  "copy-code": d => { const c = db.code.find(x => x.id === +d.id); if (c) copyText(c.code); },
+  "new-change": d => changeForm(null, d.pid || ""),
+  "edit-change": d => changeForm(db.changelog.find(x => x.id === +d.id)),
+  "del-change": async d => { if (await confirmBox("Delete this change log entry?")) { deleteRow("changelog", +d.id); render(); } },
+  "new-build": d => buildForm(null, d.pid || ""),
+  "del-build": async d => { if (await confirmBox("Delete this build record?")) { deleteRow("builds", +d.id); render(); } },
+  "new-code": d => codeForm(null, d.pid || ""),
+  "del-code": async d => { if (await confirmBox("Delete this snippet?")) { deleteRow("code", +d.id); render(); } },
+  "new-dialogue": d => dialogueForm(null, d.pid || ""),
+  "edit-dialogue": d => dialogueForm(db.dialogues.find(x => x.id === +d.id)),
+  "del-dialogue": async d => { if (await confirmBox("Delete this dialog entry?")) { deleteRow("dialogues", +d.id); render(); } },
+};
+
+/* ============================ events ============================ */
+function initEvents() {
+  document.addEventListener("click", e => {
+    if (e.target.closest("a")) return; // let real links work
+    const el = e.target.closest("[data-action]");
+    if (el) {
+      const fn = actions[el.dataset.action];
+      if (fn) { e.preventDefault(); fn(el.dataset, el); }
+      return;
+    }
+    const g = e.target.closest("[data-goto]");
+    if (g) { go(g.dataset.goto); return; }
+    const f = e.target.closest("#idea-filter [data-filter]");
+    if (f) { state.ideaFilter = f.dataset.filter; render(); return; }
+    const ml = e.target.closest("#ml-filter [data-ml]");
+    if (ml) { state.mlFilter = ml.dataset.ml; render(); return; }
+  });
+  document.addEventListener("change", e => {
+    const el = e.target.closest("[data-action]");
+    if (el && el.dataset.action === "set-idea-status") { updateRow("ideas", +el.dataset.id, { status: el.value }); toast("Status → " + el.value); render(); return; }
+    const filters = { "cl-project": "clProject", "b-project": "bProject", "c-project": "cProject", "d-project": "dProject" };
+    if (filters[e.target.id]) { state[filters[e.target.id]] = e.target.value; render(); }
+  });
+  document.addEventListener("input", e => {
+    if (e.target.id === "search-input") {
+      clearTimeout(searchTimer);
+      searchTimer = setTimeout(() => runSearch(e.target.value), 150);
+    }
+  });
+  document.addEventListener("keydown", e => { if (e.key === "Escape") { closeModal(); closeSheet(); } });
+}
+
+const QC = {
+  idea: { label: "Idea", ph: "Log an idea…" },
+  change: { label: "Change", ph: "Log a change…" },
+  build: { label: "Build", ph: "Log a build…" },
+  dialog: { label: "Dialog", ph: "Log the conversation…" },
+};
+function initQuickCapture() {
+  const sel = $("#qc-type"), inp = $("#qc-input");
+  Object.entries(QC).forEach(([k, v]) => { const o = document.createElement("option"); o.value = k; o.textContent = v.label; sel.appendChild(o); });
+  inp.placeholder = QC.idea.ph;
+  sel.addEventListener("change", () => { inp.placeholder = QC[sel.value].ph; inp.focus(); });
+  const goCapture = () => {
+    const v = inp.value.trim(); if (!v) return;
+    const t = sel.value;
+    if (t === "idea") addRow("ideas", { title: v, body: "", tags: "", status: "inbox", projectId: null, createdAt: nowISO() });
+    else if (t === "change") addRow("changelog", { title: v, version: "", kind: "feature", body: "", projectId: null, createdAt: nowISO() });
+    else if (t === "build") addRow("builds", { buildNo: "", status: "success", summary: v, log: "", projectId: null, createdAt: nowISO() });
+    else addRow("dialogues", { speaker: "you", role: "user", content: v, projectId: null, createdAt: nowISO() });
+    toast(QC[t].label + " logged ✓");
+    inp.value = ""; inp.focus(); render();
+  };
+  inp.addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); goCapture(); } });
+  $("#qc-btn").addEventListener("click", goCapture);
+}
+
+/* ============================ mobile sheets ============================ */
+let sheetType = "idea";
+function captureAdd(v) {
+  if (sheetType === "idea") addRow("ideas", { title: v, body: "", tags: "", status: "inbox", projectId: null, createdAt: nowISO() });
+  else if (sheetType === "change") addRow("changelog", { title: v, version: "", kind: "feature", body: "", projectId: null, createdAt: nowISO() });
+  else if (sheetType === "build") addRow("builds", { buildNo: "", status: "success", summary: v, log: "", projectId: null, createdAt: nowISO() });
+  else addRow("dialogues", { speaker: "you", role: "user", content: v, projectId: null, createdAt: nowISO() });
+}
+function openCaptureSheet() {
+  sheetType = "idea";
+  openSheet(`<div class="sheet-head"><h3>Log it</h3><button class="icon-btn sheet-close" aria-label="Close">✕</button></div>
+    <div class="seg capture-seg" id="capture-seg">
+      ${["idea", "change", "build", "dialog"].map(t => `<button class="seg-btn ${t === sheetType ? "on" : ""}" data-ctype="${t}">${QC[t].label}</button>`).join("")}
+    </div>
+    <textarea id="capture-input" class="capture-input" placeholder="${QC.idea.ph}" rows="4"></textarea>
+    <button class="btn primary capture-go" id="capture-go">Log it</button>`);
+  const inp = $("#capture-input");
+  setTimeout(() => inp.focus(), 60);
+  $("#capture-seg").addEventListener("click", e => {
+    const b = e.target.closest("[data-ctype]"); if (!b) return;
+    sheetType = b.dataset.ctype;
+    $$("#capture-seg .seg-btn").forEach(x => x.classList.toggle("on", x.dataset.ctype === sheetType));
+    inp.placeholder = QC[sheetType].ph; inp.focus();
+  });
+  const submit = () => {
+    const v = inp.value.trim(); if (!v) return;
+    captureAdd(v); toast(QC[sheetType].label + " logged ✓");
+    closeSheet(); render();
+  };
+  $("#capture-go").addEventListener("click", submit);
+  inp.addEventListener("keydown", e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); submit(); } });
+}
+
+function openMenuSheet() {
+  const sections = [
+    { id: "changelog", label: "Change Log", icon: "changelog" },
+    { id: "builds", label: "Builds", icon: "build" },
+    { id: "code", label: "Code", icon: "code" },
+    { id: "dialogues", label: "Dialogues", icon: "dialogue" },
+  ];
+  openSheet(`<div class="sheet-head"><h3>Menu</h3><button class="icon-btn sheet-close" aria-label="Close">✕</button></div>
+    <div class="sheet-list">${sections.map(s =>
+      `<button class="sheet-item" data-action="goto" data-view="${s.id}"><span class="nav-ic">${icon(s.icon, 18)}</span><span>${s.label}</span></button>`).join("")}</div>
+    <div class="sheet-sep"></div>
+    <div class="sheet-list">
+      <button class="sheet-item" data-action="export"><span class="nav-ic">${icon("external", 18)}</span><span>Export backup</span></button>
+      <button class="sheet-item" data-action="import"><span class="nav-ic">${icon("copy", 18)}</span><span>Import backup</span></button>
+      <button class="sheet-item danger" data-action="clear"><span class="nav-ic">${icon("trash", 18)}</span><span>Clear all data</span></button>
+    </div>
+    <div class="sheet-foot"><div class="storage" id="storage2"><span class="dot"></span><span id="storage-label2">saved in this browser</span></div></div>`);
+  updateStorageDot();
+}
+
+/* ============================ export / import / clear ============================ */
+function exportBackup() {
+  const blob = new Blob([JSON.stringify(db, null, 2)], { type: "application/json" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "delquro-files-backup.json";
+  document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(a.href);
+  toast("Backup downloaded ✓");
+}
+function importBackup() { $("#import-file").click(); }
+$("#import-file").addEventListener("change", e => {
+  const file = e.target.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const data = JSON.parse(reader.result);
+      if (!data || !data.projects) throw new Error("not a DelQuro backup");
+      db = Object.assign(emptyDB(), data);
+      persist(); render(); toast("Backup restored ✓");
+    } catch (err) { toast("Import failed: " + err.message, "error"); }
+    e.target.value = "";
+  };
+  reader.readAsText(file);
+});
+async function clearAll() {
+  if (await confirmBox("Delete EVERYTHING (all projects, ideas, logs, code, dialog)? This cannot be undone.")) {
+    db = emptyDB(); persist(); render(); toast("All data cleared");
+  }
+}
+
+/* ============================ boot ============================ */
+buildNav();
+buildTabbar();
+initQuickCapture();
+initEvents();
+$("#fab").addEventListener("click", openCaptureSheet);
+$("#menu-btn").addEventListener("click", openMenuSheet);
+updateCounts();
+updateStorageDot();
+render();
+</script>
+<script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v4513226cdae34746b4dedf0b4dfa099e1781791509496" integrity="sha512-ZE9pZaUXND66v380QUtch/5sE9tPFh2zg45pR2PB0CVkCtOREv2AJKkSidISWkysEuQ0EH8faUU5du78bx87UQ==" data-cf-beacon='{"version":"2024.11.0","token":"1954b47c125f43f8b4338b3c4f804e4f"}' crossorigin="anonymous"></script>
+</body>
+</html>
